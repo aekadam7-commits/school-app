@@ -1,0 +1,20 @@
+{
+  "name": "ghiyabat-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "تسيير غيابات التلاميذ - تطبيق سطح مكتب مع سيرفر محلي مدمج",
+  "author": "Ghiyabat",
+  "main": "main.js",
+  "scripts": { "start": "electron .", "dist": "electron-builder --win nsis --x64 --publish never" },
+  "dependencies": { "cors": "^2.8.5", "express": "^4.19.2" },
+  "devDependencies": { "electron": "^31.7.7", "electron-builder": "^24.13.3" },
+  "build": {
+    "appId": "dz.ghiyabat.students",
+    "productName": "تسيير غيابات التلاميذ",
+    "asar": false,
+    "files": ["main.js", "preload.js", "package.json", "build/**/*", "server/**/*", "node_modules/**/*"],
+    "directories": { "output": "dist" },
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.ico" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "perMachine": false, "createDesktopShortcut": true, "createStartMenuShortcut": true, "artifactName": "Ghiyabat-Setup-${version}.${ext}" }
+  }
+}
