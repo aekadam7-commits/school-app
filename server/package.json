@@ -1,0 +1,10 @@
+{
+  "name": "ghiyabat-school-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local network server for student absence management",
+  "main": "server.js",
+  "engines": {"node": ">=18"},
+  "scripts": {"start": "node server.js"},
+  "dependencies": {"express": "^4.19.2", "cors": "^2.8.5"}
+}
