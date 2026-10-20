@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تسيير غيابات التلاميذ | الإدارة والتخزين</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{--bg:#f2f5fb;--fg:#17243a;--card:#fff;--ac:#1769aa;--ac2:#0d4e83;--bd:#dce5f0;--red:#c83c4b;--muted:#718198;--soft:#eaf3fb;--shadow:0 8px 24px rgba(24,52,84,.06)}
+@media(prefers-color-scheme:dark){:root{--bg:#111827;--fg:#e7edf6;--card:#1b2636;--ac:#63a8e8;--ac2:#347ebd;--bd:#344357;--red:#ff707b;--muted:#a3b2c5;--soft:#25384c;--shadow:0 8px 24px rgba(0,0,0,.14)}}
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.6}
+nav{display:flex;gap:7px;overflow-x:auto;background:linear-gradient(120deg,var(--ac2),var(--ac));padding:12px max(12px,calc((100% - 1180px)/2));position:sticky;top:0;z-index:20;box-shadow:0 5px 18px rgba(13,78,131,.18);scrollbar-width:thin}
+nav button{white-space:nowrap;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;border-radius:9px;padding:9px 13px;font-weight:600;transition:.18s}
+nav button:hover{background:rgba(255,255,255,.13)}nav button.on{background:#fff;color:var(--ac2);border-color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+main{padding:22px 14px 40px;max-width:1180px;margin:auto;min-height:calc(100vh - 60px)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:19px;margin-bottom:16px;box-shadow:var(--shadow);overflow:hidden}
+.card>b{display:block;color:var(--ac);font-size:16px;margin-bottom:10px}.card p{color:var(--muted)}
+button,input,select{font:inherit;padding:9px 11px;border:1px solid var(--bd);border-radius:9px;background:var(--card);color:var(--fg);max-width:100%}
+input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--ac) 25%,transparent);border-color:var(--ac)}
+button{cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s}button:hover{border-color:var(--ac)}button:active{transform:translateY(1px)}button.p,nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}nav button.on{background:#fff;color:var(--ac2);border-color:#fff}button.p{box-shadow:0 3px 9px rgba(23,105,170,.15)}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.t{overflow:auto;border:1px solid var(--bd);border-radius:10px;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:540px;background:var(--card)}td,th{border-bottom:1px solid var(--bd);border-left:1px solid var(--bd);padding:9px 8px;text-align:center;font-size:13px}th{background:var(--soft);color:var(--ac2);font-weight:700;white-space:nowrap}tr:last-child td{border-bottom:0}tbody tr:hover,table tr:hover td{background:color-mix(in srgb,var(--soft) 45%,var(--card))}
+.h{display:inline-block;min-width:34px;margin:2px}.h.a{background:var(--red);color:#fff;border-color:var(--red)}.h.x{opacity:.35;pointer-events:none}.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.sig{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:24px;text-align:center}.sig>div{padding:14px;border:1px dashed var(--bd);border-radius:10px}
+#sy{padding:10px 12px;border-radius:9px;background:var(--soft);color:var(--ac2);font-weight:600}
+input[type=checkbox]{accent-color:var(--ac);width:17px;height:17px;vertical-align:middle}input[type=date],input[type=month]{min-width:145px}
+@media(max-width:650px){main{padding:12px 9px 28px}.card{padding:13px;border-radius:12px}nav{padding:9px;gap:5px}nav button{padding:8px 10px;font-size:13px}.g{grid-template-columns:1fr 1fr;gap:8px}.r{gap:6px}button,input,select{padding:8px;font-size:14px}.card>b{font-size:15px}}
+@media(max-width:390px){.g{grid-template-columns:1fr}}
+@media print{nav,.np{display:none!important}body{background:#fff;color:#000;font-size:12px}main{max-width:none;padding:0}.card{border:0;box-shadow:none;padding:4px}.t{overflow:visible;border:0}table{min-width:0}td,th{padding:3px;font-size:10px}}
+.daycell{cursor:pointer;min-width:28px;padding:5px 3px!important;user-select:none}.daycell.absent{background:#f8c8cb!important;color:#9b1522;font-weight:800}.daycell:hover{outline:2px solid var(--ac);outline-offset:-2px}@media(max-width:650px){.daycell{min-width:25px;padding:4px 2px!important;font-size:11px!important}}</style>
+</head>
+<body>
+<nav id="nav"></nav><main id="m"></main>
+<script>
+const $=s=>document.querySelector(s);
+const WILAYAS=["أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار", "البليدة", "البويرة", "تمنراست", "تبسة", "تلمسان", "تيارت", "تيزي وزو", "الجزائر", "الجلفة", "جيجل", "سطيف", "سعيدة", "سكيكدة", "سيدي بلعباس", "عنابة", "قالمة", "قسنطينة", "المدية", "مستغانم", "المسيلة", "معسكر", "ورقلة", "وهران", "البيض", "إليزي", "برج بوعريريج", "بومرداس", "الطارف", "تندوف", "تيسمسيلت", "الوادي", "خنشلة", "سوق أهراس", "تيبازة", "ميلة", "عين الدفلى", "النعامة", "عين تموشنت", "غرداية", "غليزان", "تيميمون", "برج باجي مختار", "أولاد جلال", "بني عباس", "عين صالح", "عين قزام", "تقرت", "جانت", "المغير", "المنيعة", "أفلو", "بريكة", "القنطرة", "بئر العاتر", "العريشة", "قصر الشلالة", "عين وسارة", "مسعد", "قصر البخاري", "بوسعادة", "الأبيض سيدي الشيخ"];
+const def={set:{year:'2026/2027',school:'',wilaya:'',baladiya:'',dir:'',nad:'',ma:'',mr:'',mt:''},terms:[{n:'الفصل 1',a:'',b:''},{n:'الفصل 2',a:'',b:''},{n:'الفصل 3',a:'',b:''}],hol:[],cls:[],st:[],tt:{},cx:{},ab:{}};
+let D;try{D=JSON.parse(localStorage.getItem('abs3'))||def}catch(e){D=def}
+D.th=D.th||[6,12,18];
+let token=localStorage.getItem('gh_token')||'', user=null, tmr=null, pollTimer=null, syncing=false, msg='غير متصل بالسيرفر';
+const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const base=native?'http://127.0.0.1:8787':'';const r=await fetch(base+url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
+const save=()=>{localStorage.setItem('abs3',JSON.stringify(D));push()};
+function push(){if(!token)return;clearTimeout(tmr);tmr=setTimeout(async()=>{try{const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt;msg='تم الحفظ على السيرفر '+new Date().toLocaleTimeString();setStatus()}catch(e){msg='تعذر الحفظ على السيرفر: '+e.message;setStatus()}},500)}
+function setStatus(){const e=document.getElementById('sy');if(e)e.textContent=msg}
+async function pull(){const r=await api('/api/state');if(r.state&&r.state.data){D=Object.assign({},def,r.state.data);D.th=D.th||[6,12,18];localStorage.setItem('abs3',JSON.stringify(D));window._lastServerUpdate=r.updatedAt;msg='تم تحميل البيانات من السيرفر'}else{msg='لا توجد بيانات على السيرفر؛ تم رفع بيانات هذا الجهاز';const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt}R();setStatus()}
+async function login(){try{const username=$('#loginUser').value.trim(),password=$('#loginPass').value;const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});token=r.token;user=r.user;localStorage.setItem('gh_token',token);await pull();startPolling()}catch(e){alert(e.message)}}
+async function setupAdmin(){try{const username=$('#setupUser').value.trim(),password=$('#setupPass').value;const r=await api('/api/auth/setup',{method:'POST',body:JSON.stringify({username,password})});token=r.token;user=r.user;localStorage.setItem('gh_token',token);await pull();startPolling()}catch(e){alert(e.message)}}
+async function logout(){try{await api('/api/auth/logout',{method:'POST',body:'{}'})}catch{}token='';user=null;localStorage.removeItem('gh_token');clearInterval(pollTimer);msg='تم تسجيل الخروج';R()}
+async function initServer(){try{const st=await api('/api/auth/status');if(!token){renderGate(st.setupRequired);return}const me=await api('/api/auth/me');user=me.user;await pull();startPolling()}catch(e){token='';localStorage.removeItem('gh_token');renderGate(false,e.message)}}
+function renderGate(setup,error=''){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML=`<div class="card" style="max-width:520px;margin:8vh auto"><h2 style="color:var(--ac);margin-top:0">تسيير غيابات التلاميذ</h2><p>تسجيل الدخول إلى السيرفر المحلي وتخزين بيانات المؤسسة مركزيًا.</p>${error?`<p style="color:var(--red)">${esc(error)}</p>`:''}${setup?`<b>الإعداد لأول مرة — إنشاء حساب المسؤول</b><label>اسم المستخدم (3 أحرف على الأقل)</label><input id="setupUser" autocomplete="username" style="width:100%" placeholder="admin"><label style="margin-top:10px">كلمة المرور (8 أحرف على الأقل)</label><input id="setupPass" type="password" autocomplete="new-password" style="width:100%"><div class="r"><button class="p" onclick="setupAdmin()">إنشاء حساب المسؤول</button></div>`:`<b>تسجيل الدخول</b><label>اسم المستخدم</label><input id="loginUser" autocomplete="username" style="width:100%"><label style="margin-top:10px">كلمة المرور</label><input id="loginPass" type="password" autocomplete="current-password" style="width:100%" onkeydown="if(event.key==='Enter')login()"><div class="r"><button class="p" onclick="login()">دخول</button></div>`}<p style="font-size:12px">تأكد أن نافذة السيرفر مفتوحة على الجهاز الرئيسي. أنشئ حساب المسؤول مرة واحدة عند أول تشغيل.</p></div>`}
+function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!token||syncing)return;try{syncing=true;const r=await api('/api/state');if(r.state&&r.state.data&&r.updatedAt&&r.updatedAt!==window._lastServerUpdate){const local=JSON.parse(localStorage.getItem('abs3')||'{}');if(JSON.stringify(local)!==JSON.stringify(r.state.data)){D=Object.assign({},def,r.state.data);D.th=D.th||[6,12,18];localStorage.setItem('abs3',JSON.stringify(D));msg='تم تحديث البيانات من السيرفر';R()}window._lastServerUpdate=r.updatedAt;setStatus()}}catch(e){msg='انقطع الاتصال بالسيرفر';setStatus()}finally{syncing=false}},3000)}
+const DAYS=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],HR=[1,2,3,4,5,6,7,8,9];
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const dt=s=>new Date(s+'T00:00');
+const today=iso(new Date());
+let tab=0,S={cls:'',date:today,per:'month',mon:today.slice(0,7)};
+const TABS=['الإعدادات','الأقسام والتلاميذ','استعمال الزمن','التسجيل اليومي','التقارير','الكشف الشهري','الإشعارات'];
+const isHol=s=>D.hol.some(h=>h.a&&h.b&&s>=h.a&&s<=h.b);
+const sched=(c,s)=>isHol(s)?[]:((D.tt[c]||{})[dt(s).getDay()]||[]);
+const held=(c,s)=>{const x=((D.cx[s]||{})[c])||[];return sched(c,s).filter(h=>!x.includes(h))};
+function rng(a,b){const r=[];for(let d=dt(a);iso(d)<=b;d.setDate(d.getDate()+1))r.push(iso(d));return r}
+function period(){
+ const d=S.date,x=dt(d);
+ if(S.per=='day')return[d,d];
+ if(S.per=='week'){const a=new Date(x);a.setDate(x.getDate()-x.getDay());const b=new Date(a);b.setDate(a.getDate()+6);return[iso(a),iso(b)]}
+ if(S.per=='month'){const y=x.getFullYear(),m=x.getMonth();return[iso(new Date(y,m,1)),iso(new Date(y,m+1,0))]}
+ if(S.per=='term'){const t=D.terms.find(t=>t.a&&t.b&&d>=t.a&&d<=t.b);return t?[t.a,t.b]:[d,d]}
+ const y=parseInt(D.set.year)||x.getFullYear();return[y+'-09-01',(y+1)+'-08-31']}
+const absH=(id,c,dates)=>{let n=0;dates.forEach(d=>{const a=(D.ab[d]||{})[id];if(a){const hh=held(c,d);a.forEach(h=>{if(hh.includes(h))n++})}});return n};
+const heldN=(c,dates)=>dates.reduce((n,d)=>n+held(c,d).length,0);
+const schedN=(c,dates)=>dates.reduce((n,d)=>n+sched(c,d).length,0);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clsSel=(all)=>`<select id="cs">${all?'<option value="">كل الأقسام</option>':''}${D.cls.map(c=>`<option ${c==S.cls?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
+function nav(){$('#nav').innerHTML=TABS.map((t,i)=>`<button class="${i==tab?'on':''}" onclick="tab=${i};R()">${t}</button>`).join('')}
+function R(){if(!token){renderGate(false);return}nav();if(!S.cls&&D.cls.length)S.cls=D.cls[0];[v0,v1,v2,v3,v4,v5,v6][tab]();
+ const cs=$('#cs');if(cs)cs.onchange=e=>{S.cls=e.target.value;R()}}
+function v0(){
+ const f=[['year','السنة الدراسية'],['school','اسم المؤسسة'],['wilaya','الولاية'],['baladiya','البلدية'],['dir','المدير'],['nad','الناظر'],['ma','المشرف العام'],['mr','المشرف الرئيسي'],['mt','مشرف التربية']];
+ $('#m').innerHTML=`<div class="card"><div class="g">${f.map(([k,l])=>`<div><label>${l}</label><input style="width:100%" value="${esc(D.set[k])}" onchange="D.set['${k}']=this.value;save()"></div>`).join('')}</div></div>
+ <div class="card"><b>الفصول</b>${D.terms.map((t,i)=>`<div class="r">${t.n}: من <input type="date" value="${t.a}" onchange="D.terms[${i}].a=this.value;save()"> إلى <input type="date" value="${t.b}" onchange="D.terms[${i}].b=this.value;save()"></div>`).join('')}</div>
+ <div class="card"><b>العطل</b>${D.hol.map((h,i)=>`<div class="r"><input placeholder="اسم العطلة" value="${esc(h.n)}" onchange="D.hol[${i}].n=this.value;save()"> من <input type="date" value="${h.a}" onchange="D.hol[${i}].a=this.value;save()"> إلى <input type="date" value="${h.b}" onchange="D.hol[${i}].b=this.value;save()"><button onclick="D.hol.splice(${i},1);save();R()">✕</button></div>`).join('')}<button onclick="D.hol.push({n:'',a:'',b:''});save();R()">+ عطلة</button></div>
+ <div class="card"><b>السيرفر المحلي والمزامنة بين الأجهزة</b><p id="sy" style="font-size:13px">${msg}</p><p>الحساب: ${esc(user&&user.username||'')}</p><div class="r"><button onclick="pull().catch(e=>alert(e.message))">تحديث من السيرفر</button><button onclick="api('/api/backup',{method:'POST',body:'{}'}).then(x=>alert('تم إنشاء النسخة: '+x.name)).catch(e=>alert(e.message))">نسخة احتياطية على السيرفر</button><button onclick="logout()">تسجيل الخروج</button></div><small>تُحفظ البيانات على الجهاز الرئيسي، وتُزامَن الأجهزة المتصلة بالشبكة المحلية كل 3 ثوانٍ.</small></div>
+ <div class="card"><b>عتبات الإشعارات (ساعات الغياب)</b><div class="r">إشعار أول: <input type="number" style="width:70px" value="${D.th[0]}" onchange="D.th[0]=+this.value;save()"> إنذار: <input type="number" style="width:70px" value="${D.th[1]}" onchange="D.th[1]=+this.value;save()"> استدعاء الولي: <input type="number" style="width:70px" value="${D.th[2]}" onchange="D.th[2]=+this.value;save()"></div></div>
+ <div class="card"><b>نسخة احتياطية</b><div class="r"><button onclick="bk()">تصدير</button><input type="file" accept=".json" onchange="rs(this)"></div></div>`}
+function bk(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D)]));a.download='absences-backup.json';a.click()}
+function rs(i){const f=i.files[0];if(!f)return;f.text().then(t=>{D=JSON.parse(t);save();R()})}
+const X=['علوم تجريبية','رياضيات','تقني رياضي (هندسة ميكانيكية)','تقني رياضي (هندسة كهربائية)','تقني رياضي (هندسة مدنية)','تقني رياضي (هندسة الطرائق)','تسيير واقتصاد','آداب وفلسفة','لغات أجنبية'];
+const SP={1:['جذع مشترك علوم وتكنولوجيا','جذع مشترك آداب'],2:X,3:X};
+const FL=[['sn','الرقم المدرسي'],['l','اللقب'],['p','الاسم'],['bd','تاريخ الميلاد','date'],['bp','مكان الميلاد'],['ph','هاتف الولي'],['ad','العنوان']];
+function fillSp(){$('#gs').innerHTML=SP[$('#gl').value].map(x=>`<option>${x}</option>`).join('')}
+function gen(){const l=$('#gl').value,sp=$('#gs').value,n=+$('#gn').value||1;for(let k=1;k<=n;k++){const c=`${l} ثانوي ${sp} ${k}`;if(!D.cls.includes(c))D.cls.push(c)}S.cls=D.cls[D.cls.length-1];save();R()}
+function genAll(){const n=+$('#gn').value||1;[1,2,3].forEach(l=>SP[l].forEach(sp=>{for(let k=1;k<=n;k++){const c=`${l} ثانوي ${sp} ${k}`;if(!D.cls.includes(c))D.cls.push(c)}}));save();R()}
+function addSt(){const o={id:'s'+Date.now(),c:S.cls};FL.forEach(([k])=>o[k]=$('#f_'+k).value.trim());if(!o.l&&!o.p||!S.cls)return;o.n=(o.l+' '+o.p).trim();D.st.push(o);save();R()}
+function v1(){
+ const L=D.st.filter(s=>!S.cls||s.c==S.cls);
+ $('#m').innerHTML=`<div class="card"><b>إنشاء الأقسام حسب المستوى والتخصص</b><div class="r"><select id="gl" onchange="fillSp()"><option value="1">1 ثانوي</option><option value="2">2 ثانوي</option><option value="3">3 ثانوي</option></select><select id="gs">${SP[1].map(x=>`<option>${x}</option>`).join('')}</select>عدد الأفواج <input id="gn" type="number" value="1" min="1" style="width:60px"><button class="p" onclick="gen()">إنشاء</button><button onclick="genAll()">كل التخصصات</button></div>
+ <div class="r"><input id="nc" placeholder="قسم يدوي"><button onclick="if(nc.value){D.cls.push(nc.value);S.cls=nc.value;save();R()}">+ قسم</button> القسم: ${clsSel(false)}<button onclick="if(confirm('حذف القسم وتلاميذه؟')){D.st=D.st.filter(s=>s.c!=S.cls);D.cls=D.cls.filter(c=>c!=S.cls);S.cls='';save();R()}">حذف</button></div></div>
+ <div class="card"><b>استيراد من Excel</b><p style="font-size:13px">الأعمدة بالترتيب: A الرقم المدرسي، B اللقب، C الاسم، D تاريخ الميلاد، E مكان الميلاد، F هاتف الولي، G العنوان، H القسم (اختياري). السطر الأول عنوان.</p><input type="file" accept=".xlsx,.xls,.csv" onchange="imp(this)"></div>
+ <div class="card"><div class="g">${FL.map(([k,l,t])=>`<input id="f_${k}" type="${t||'text'}" placeholder="${l}" title="${l}">`).join('')}</div><button class="p" onclick="addSt()" style="margin-top:6px">+ تلميذ في القسم المحدد</button>
+ <div class="t"><table><tr><th>#</th>${FL.map(f=>`<th>${f[1]}</th>`).join('')}<th></th></tr>${L.map((s,i)=>`<tr><td>${i+1}</td>${FL.map(([k])=>`<td>${esc(s[k])}</td>`).join('')}<td><button onclick="D.st=D.st.filter(x=>x.id!='${s.id}');save();R()">✕</button></td></tr>`).join('')}</table></div></div>`}
+function imp(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const w=XLSX.read(e.target.result,{type:'array'}),rows=XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true});let n=0;
+ const dv=v=>typeof v=='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').trim();
+ rows.slice(1).forEach((x,k)=>{const c=String(x[7]||S.cls||'').trim();if(!c||(!x[1]&&!x[2]))return;if(!D.cls.includes(c))D.cls.push(c);const l=String(x[1]||'').trim(),p=String(x[2]||'').trim();D.st.push({id:'s'+Date.now()+'_'+k,sn:String(x[0]||'').trim(),l,p,n:(l+' '+p).trim(),bd:dv(x[3]),bp:String(x[4]||'').trim(),ph:String(x[5]||'').trim(),ad:String(x[6]||'').trim(),c});n++});
+ save();alert('تم استيراد '+n+' تلميذ');R()};r.readAsArrayBuffer(f)}
+function v2(){
+ const c=S.cls,t=D.tt[c]||{};let tot=0;Object.values(t).forEach(a=>tot+=a.length);
+ $('#m').innerHTML=`<div class="card">القسم: ${clsSel(false)} — الحجم الأسبوعي المبرمج: <b>${tot}</b> ساعة
+ <div class="t"><table><tr><th></th>${HR.map(h=>`<th>${h}</th>`).join('')}</tr>${[0,1,2,3,4,6].map(d=>`<tr><th>${DAYS[d]}</th>${HR.map(h=>`<td><input type="checkbox" ${(t[d]||[]).includes(h)?'checked':''} onchange="tt(${d},${h},this.checked)"></td>`).join('')}</tr>`).join('')}</table></div></div>`}
+function tt(d,h,v){const c=S.cls;D.tt[c]=D.tt[c]||{};let a=D.tt[c][d]||[];a=v?[...a,h]:a.filter(x=>x!=h);D.tt[c][d]=a.sort((x,y)=>x-y);save();R()}
+function v3(){
+ const c=S.cls,d=S.date,sc=sched(c,d),hd=held(c,d),L=D.st.filter(s=>s.c==c);
+ $('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(false)} <input type="date" value="${d}" onchange="S.date=this.value;R()"> ${DAYS[dt(d).getDay()]} ${isHol(d)?'<b>(عطلة)</b>':''}</div>
+ <div>الساعات المبرمجة: <b>${sc.length}</b> — المدرَّسة فعليا: <b>${hd.length}</b></div>
+ <div class="r">ساعات لم تُدرَّس (غياب أستاذ...): ${sc.map(h=>`<button class="h ${hd.includes(h)?'':'a'}" onclick="cx(${h})">${h}</button>`).join('')||'لا توجد ساعات'}</div></div>
+ <div class="card t"><table><tr><th>#</th><th>التلميذ</th><th>الساعات الغائب فيها</th><th></th></tr>${L.map((s,i)=>{const a=(D.ab[d]||{})[s.id]||[];return`<tr><td>${i+1}</td><td style="text-align:right">${esc(s.n)}</td><td>${sc.map(h=>`<button class="h ${a.includes(h)?'a':''} ${hd.includes(h)?'':'x'}" onclick="ab('${s.id}',${h})">${h}</button>`).join('')}</td><td><button onclick="abAll('${s.id}',1)">كلي</button> <button onclick="abAll('${s.id}',0)">عودة</button></td></tr>`}).join('')}</table></div>`}
+function cx(h){const c=S.cls,d=S.date;D.cx[d]=D.cx[d]||{};let a=D.cx[d][c]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];D.cx[d][c]=a;save();R()}
+function ab(id,h){const d=S.date;D.ab[d]=D.ab[d]||{};let a=D.ab[d][id]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];if(a.length)D.ab[d][id]=a;else delete D.ab[d][id];save();R()}
+function abAll(id,v){const d=S.date;D.ab[d]=D.ab[d]||{};if(v)D.ab[d][id]=[...sched(S.cls,d)];else delete D.ab[d][id];save();R()}
+function v4(){
+ const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls;
+ $('#m').innerHTML=`<div class="card np"><div class="r">الفترة: <select onchange="S.per=this.value;R()">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['term','فصلي'],['year','سنوي']].map(([k,l])=>`<option value="${k}" ${S.per==k?'selected':''}>${l}</option>`).join('')}</select><input type="date" value="${S.date}" onchange="S.date=this.value;R()">القسم: ${clsSel(true)}<button class="p" onclick="print()">طباعة</button></div></div>
+ <div class="card"><b>من ${a} إلى ${b}</b><h4>الساعات المدرَّسة لكل قسم</h4><div class="t"><table><tr><th>القسم</th><th>مبرمجة</th><th>فعلية</th><th>الفرق</th></tr>${cl.map(c=>{const s=schedN(c,ds),h=heldN(c,ds);return`<tr><td>${esc(c)}</td><td>${s}</td><td>${h}</td><td>${s-h}</td></tr>`}).join('')}</table></div>
+ <h4>غيابات التلاميذ (بالساعات)</h4><div class="t"><table><tr><th>التلميذ</th><th>القسم</th><th>ساعات الغياب</th></tr>${D.st.filter(s=>cl.includes(s.c)).map(s=>[s,absH(s.id,s.c,ds)]).filter(x=>x[1]>0).sort((x,y)=>y[1]-x[1]).map(([s,n])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td><b>${n}</b></td></tr>`).join('')||'<tr><td colspan=3>لا غيابات</td></tr>'}</table></div></div>`}
+function head(){const s=D.set;return`<div style="text-align:center"><b>${esc(s.school)}</b> — ${esc(s.baladiya)} / ${esc(s.wilaya)}<br>السنة الدراسية: ${esc(s.year)}</div>`}
+function toggleDayAbs(id,date){const c=S.cls,hs=sched(c,date),old=(D.ab[date]||{})[id]||[],allAbsent=hs.length>0&&hs.every(h=>old.includes(h));D.ab[date]=D.ab[date]||{};if(allAbsent)delete D.ab[date][id];else D.ab[date][id]=[...new Set([...old,...hs])];save();R()}
+function v5(){
+ const c=S.cls,m=S.mon,[y,mo]=m.split('-').map(Number),n=new Date(y,mo,0).getDate(),ds=rng(m+'-01',m+'-'+String(n).padStart(2,'0')),L=D.st.filter(s=>s.c==c);
+ const H=heldN(c,ds),tot=L.length*H;let ab_=0;
+ const rows=L.map((s,i)=>{let sum=0;const cells=ds.map(d=>{const a=(D.ab[d]||{})[s.id]||[],hh=held(c,d),k=a.filter(h=>hh.includes(h)).length;sum+=k;const absent=k>0;return`<td class="daycell ${absent?'absent':''}" title="${d}: ${absent?'غائب '+k+' ساعة':'لا يوجد غياب مسجل'}" onclick="toggleDayAbs('${s.id}','${d}')">${absent?'غ':(sched(c,d).length?'✓':'—')}</td>`}).join('');ab_+=sum;return`<tr><td>${i+1}</td><td style="text-align:right;white-space:nowrap">${esc(s.n)}</td>${cells}<td><b>${sum}</b></td></tr>`}).join('');
+ const eff=tot-ab_,pa=tot?(eff/tot*100).toFixed(2):'0',pb=tot?(ab_/tot*100).toFixed(2):'0';
+ $('#m').innerHTML=`<div class="card np"><div class="r">القسم: ${clsSel(false)}<input type="month" value="${m}" onchange="S.mon=this.value;R()"><button class="p" onclick="print()">طباعة</button></div></div>
+ <div class="card">${head()}<h3 style="text-align:center">سجل الحضور والغياب اليومي — القسم ${esc(c)} — شهر ${m}</h3><p style="text-align:center">اضغط على خانة اليوم لتسجيل غياب التلميذ في جميع الحصص المبرمجة. غ = غائب، ✓ = لا يوجد غياب مسجل، — = لا حصص مبرمجة.</p>
+ <div class="t"><table><tr><th>#</th><th>الاسم</th>${ds.map(d=>`<th>${+d.slice(8)}</th>`).join('')}<th>المجموع</th></tr>${rows}<tr><td colspan="2">الساعات المدرَّسة</td>${ds.map(d=>`<td>${held(c,d).length||''}</td>`).join('')}<td><b>${H}</b></td></tr></table></div>
+ <table style="margin-top:10px;max-width:420px"><tr><td>الحضور الكلي (تلاميذ × ساعات)</td><td>${tot}</td></tr><tr><td>عدد الغيابات</td><td>${ab_}</td></tr><tr><td>الحضور الفعلي</td><td>${eff}</td></tr><tr><td>النسبة % للحضور = (الحضور الفعلي ÷ الحضور الكلي) × 100</td><td><b>${pa}%</b></td></tr><tr><td>النسبة % للغياب</td><td><b>${pb}%</b></td></tr></table>
+ <div class="sig"><div>المشرف التربوي<br>${esc(D.set.mt)}</div><div>المشرف الرئيسي<br>${esc(D.set.mr)}</div><div>المشرف العام<br>${esc(D.set.ma)}</div><div>الناظر<br>${esc(D.set.nad)}</div><div>المدير<br>${esc(D.set.dir)}</div></div></div>`}
+function lvl(n){return n>=D.th[2]?'استدعاء الولي':n>=D.th[1]?'إنذار':n>=D.th[0]?'إشعار أول':''}
+function v6(){
+ const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls;
+ const L=D.st.filter(s=>cl.includes(s.c)).map(s=>[s,absH(s.id,s.c,ds)]).filter(x=>lvl(x[1])).sort((x,y)=>y[1]-x[1]);
+ $('#m').innerHTML=`<div class="card"><div class="r">الفترة: <select onchange="S.per=this.value;R()">${[['week','أسبوعي'],['month','شهري'],['term','فصلي'],['year','سنوي']].map(([k,l])=>`<option value="${k}" ${S.per==k?'selected':''}>${l}</option>`).join('')}</select><input type="date" value="${S.date}" onchange="S.date=this.value;R()">القسم: ${clsSel(true)}</div><b>${a} → ${b}</b> (العتبات: ${D.th.join(' / ')} ساعة)
+ <div class="t"><table><tr><th>التلميذ</th><th>القسم</th><th>الساعات</th><th>الإجراء</th><th></th></tr>${L.map(([s,n])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td>${n}</td><td>${lvl(n)}</td><td><button onclick="pn('${s.id}',${n})">طباعة</button></td></tr>`).join('')||'<tr><td colspan=5>لا توجد حالات</td></tr>'}</table></div></div>`}
+function pn(id,n){const s=D.st.find(x=>x.id==id),[a,b]=period(),t=D.set,k=lvl(n),body=k=='استدعاء الولي'?'نستدعيكم للحضور إلى الإدارة في أقرب الآجال لتبرير غيابات ابنكم(ابنتكم) ومتابعة وضعيته الدراسية.':k=='إنذار'?'ننذركم بضرورة مواظبة ابنكم(ابنتكم) على الدراسة وتقديم مبررات غياباته، وإلا اتُّخذت في حقه الإجراءات المنصوص عليها في النظام الداخلي.':'نرجو منكم متابعة مواظبته على الدراسة وتقديم مبررات غياباته.';
+ const w=window.open('','_blank');w.document.write(`<html dir="rtl"><body style="font-family:Tahoma;padding:30px;line-height:2"><div style="text-align:center"><b>الجمهورية الجزائرية الديمقراطية الشعبية<br>وزارة التربية الوطنية</b><br>ولاية ${esc(t.wilaya)} — بلدية ${esc(t.baladiya)}<br>${esc(t.school)}</div><h2 style="text-align:center"><u>${k} بخصوص الغياب</u></h2><p>إلى السيد(ة) ولي أمر التلميذ(ة): <b>${esc(s.n)}</b><br>المولود(ة) في: ${esc(s.bd)} بـ ${esc(s.bp)} — الرقم المدرسي: ${esc(s.sn)}<br>القسم: ${esc(s.c)} — العنوان: ${esc(s.ad)} — الهاتف: ${esc(s.ph)}</p><p>نعلمكم أن ابنكم(ابنتكم) قد تغيب(ت) <b>${n}</b> ساعة خلال الفترة من ${a} إلى ${b}. ${body}</p><p>تحريرا في: ${today}</p><p style="text-align:left;padding-left:40px">المدير<br>${esc(t.dir)}</p><p>توقيع الولي (استلام): ...................</p><script>print()<\/script></body></html>`);w.document.close()}
+async function startEmbeddedAndroidServer(){
+  try {
+    const cap=window.Capacitor;
+    if(!(cap&&cap.isNativePlatform&&cap.isNativePlatform())) return;
+    const plugins=cap.Plugins||{};
+    const node=plugins.CapacitorNodeJS||plugins.NodeJS;
+    if(!node) throw new Error('إضافة Node.js غير موجودة داخل التطبيق');
+    try { await node.start({}); } catch(e) { console.warn('Node start:',e); }
+    const end=Date.now()+20000;
+    while(Date.now()<end){
+      try { const r=await fetch('http://127.0.0.1:8787/api/ping',{cache:'no-store'}); if(r.ok) return; } catch(e){}
+      await new Promise(r=>setTimeout(r,400));
+    }
+    throw new Error('لم يبدأ السيرفر المدمج على الهاتف. أعد فتح التطبيق.');
+  } catch(e) { alert(e.message||String(e)); }
+}
+startEmbeddedAndroidServer().finally(initServer);
+</script>
+</body>
+</html>
