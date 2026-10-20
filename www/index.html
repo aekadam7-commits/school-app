@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>تسيير غيابات التلاميذ | الإدارة والتخزين</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root{--bg:#f2f5fb;--fg:#17243a;--card:#fff;--ac:#1769aa;--ac2:#0d4e83;--bd:#dce5f0;--red:#c83c4b;--muted:#718198;--soft:#eaf3fb;--shadow:0 8px 24px rgba(24,52,84,.06)}
@@ -98,10 +97,11 @@ function v1(){
  <div class="card"><b>استيراد من Excel</b><p style="font-size:13px">الأعمدة بالترتيب: A الرقم المدرسي، B اللقب، C الاسم، D تاريخ الميلاد، E مكان الميلاد، F هاتف الولي، G العنوان، H القسم (اختياري). السطر الأول عنوان.</p><input type="file" accept=".xlsx,.xls,.csv" onchange="imp(this)"></div>
  <div class="card"><div class="g">${FL.map(([k,l,t])=>`<input id="f_${k}" type="${t||'text'}" placeholder="${l}" title="${l}">`).join('')}</div><button class="p" onclick="addSt()" style="margin-top:6px">+ تلميذ في القسم المحدد</button>
  <div class="t"><table><tr><th>#</th>${FL.map(f=>`<th>${f[1]}</th>`).join('')}<th></th></tr>${L.map((s,i)=>`<tr><td>${i+1}</td>${FL.map(([k])=>`<td>${esc(s[k])}</td>`).join('')}<td><button onclick="D.st=D.st.filter(x=>x.id!='${s.id}');save();R()">✕</button></td></tr>`).join('')}</table></div></div>`}
-function imp(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const w=XLSX.read(e.target.result,{type:'array'}),rows=XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true});let n=0;
+function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';x.onload=ok;x.onerror=()=>no(new Error('تعذر تحميل مكتبة Excel، تحقق من الإنترنت'));document.head.appendChild(x)})}
+function imp(i){const f=i.files[0];if(!f)return;loadXLSX().then(()=>{const r=new FileReader();r.onload=e=>{const w=XLSX.read(e.target.result,{type:'array'}),rows=XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true});let n=0;
  const dv=v=>typeof v=='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').trim();
  rows.slice(1).forEach((x,k)=>{const c=String(x[7]||S.cls||'').trim();if(!c||(!x[1]&&!x[2]))return;if(!D.cls.includes(c))D.cls.push(c);const l=String(x[1]||'').trim(),p=String(x[2]||'').trim();D.st.push({id:'s'+Date.now()+'_'+k,sn:String(x[0]||'').trim(),l,p,n:(l+' '+p).trim(),bd:dv(x[3]),bp:String(x[4]||'').trim(),ph:String(x[5]||'').trim(),ad:String(x[6]||'').trim(),c});n++});
- save();alert('تم استيراد '+n+' تلميذ');R()};r.readAsArrayBuffer(f)}
+ save();alert('تم استيراد '+n+' تلميذ');R()};r.readAsArrayBuffer(f)}).catch(e=>alert(e.message))}
 function v2(){
  const c=S.cls,t=D.tt[c]||{};let tot=0;Object.values(t).forEach(a=>tot+=a.length);
  $('#m').innerHTML=`<div class="card">القسم: ${clsSel(false)} — الحجم الأسبوعي المبرمج: <b>${tot}</b> ساعة
@@ -141,23 +141,30 @@ function v6(){
  <div class="t"><table><tr><th>التلميذ</th><th>القسم</th><th>الساعات</th><th>الإجراء</th><th></th></tr>${L.map(([s,n])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td>${n}</td><td>${lvl(n)}</td><td><button onclick="pn('${s.id}',${n})">طباعة</button></td></tr>`).join('')||'<tr><td colspan=5>لا توجد حالات</td></tr>'}</table></div></div>`}
 function pn(id,n){const s=D.st.find(x=>x.id==id),[a,b]=period(),t=D.set,k=lvl(n),body=k=='استدعاء الولي'?'نستدعيكم للحضور إلى الإدارة في أقرب الآجال لتبرير غيابات ابنكم(ابنتكم) ومتابعة وضعيته الدراسية.':k=='إنذار'?'ننذركم بضرورة مواظبة ابنكم(ابنتكم) على الدراسة وتقديم مبررات غياباته، وإلا اتُّخذت في حقه الإجراءات المنصوص عليها في النظام الداخلي.':'نرجو منكم متابعة مواظبته على الدراسة وتقديم مبررات غياباته.';
  const w=window.open('','_blank');w.document.write(`<html dir="rtl"><body style="font-family:Tahoma;padding:30px;line-height:2"><div style="text-align:center"><b>الجمهورية الجزائرية الديمقراطية الشعبية<br>وزارة التربية الوطنية</b><br>ولاية ${esc(t.wilaya)} — بلدية ${esc(t.baladiya)}<br>${esc(t.school)}</div><h2 style="text-align:center"><u>${k} بخصوص الغياب</u></h2><p>إلى السيد(ة) ولي أمر التلميذ(ة): <b>${esc(s.n)}</b><br>المولود(ة) في: ${esc(s.bd)} بـ ${esc(s.bp)} — الرقم المدرسي: ${esc(s.sn)}<br>القسم: ${esc(s.c)} — العنوان: ${esc(s.ad)} — الهاتف: ${esc(s.ph)}</p><p>نعلمكم أن ابنكم(ابنتكم) قد تغيب(ت) <b>${n}</b> ساعة خلال الفترة من ${a} إلى ${b}. ${body}</p><p>تحريرا في: ${today}</p><p style="text-align:left;padding-left:40px">المدير<br>${esc(t.dir)}</p><p>توقيع الولي (استلام): ...................</p><script>print()<\/script></body></html>`);w.document.close()}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const withTimeout=(p,ms)=>Promise.race([Promise.resolve(p),wait(ms).then(()=>{throw new Error('timeout')})]);
+function renderLoading(t){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML='<div class="card" style="max-width:520px;margin:12vh auto;text-align:center"><h2 style="color:var(--ac);margin-top:0">تسيير غيابات التلاميذ</h2><p id="ld">'+t+'</p></div>'}
+function renderFatal(e){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML='<div class="card" style="max-width:520px;margin:8vh auto"><h2 style="color:var(--red);margin-top:0">تعذر تشغيل السيرفر المدمج</h2><p>'+esc(e)+'</p><div class="r"><button class="p" onclick="boot()">إعادة المحاولة</button></div></div>'}
 async function startEmbeddedAndroidServer(){
-  try {
-    const cap=window.Capacitor;
-    if(!(cap&&cap.isNativePlatform&&cap.isNativePlatform())) return;
-    const plugins=cap.Plugins||{};
-    const node=plugins.CapacitorNodeJS||plugins.NodeJS;
-    if(!node) throw new Error('إضافة Node.js غير موجودة داخل التطبيق');
-    try { await node.start({}); } catch(e) { console.warn('Node start:',e); }
-    const end=Date.now()+20000;
-    while(Date.now()<end){
-      try { const r=await fetch('http://127.0.0.1:8787/api/ping',{cache:'no-store'}); if(r.ok) return; } catch(e){}
-      await new Promise(r=>setTimeout(r,400));
-    }
-    throw new Error('لم يبدأ السيرفر المدمج على الهاتف. أعد فتح التطبيق.');
-  } catch(e) { alert(e.message||String(e)); }
+  const cap=window.Capacitor;
+  if(!(cap&&cap.isNativePlatform&&cap.isNativePlatform())) return;
+  const ping=async()=>{try{const r=await withTimeout(fetch('http://127.0.0.1:8787/api/ping',{cache:'no-store'}),2000);return r.ok}catch(e){return false}};
+  if(await ping()) return;
+  let node=(cap.Plugins||{}).CapacitorNodeJS||(cap.Plugins||{}).NodeJS;
+  if(!node&&cap.registerPlugin){try{node=cap.registerPlugin('CapacitorNodeJS')}catch(e){}}
+  if(!node) throw new Error('إضافة Node.js غير موجودة داخل التطبيق');
+  try{await withTimeout(node.start({}),8000)}catch(e){console.warn('Node start:',e)}
+  const end=Date.now()+25000;
+  while(Date.now()<end){ if(await ping()) return; await wait(500) }
+  throw new Error('لم يبدأ السيرفر المدمج على الهاتف. أغلق التطبيق تمامًا ثم افتحه مجددًا.');
 }
-startEmbeddedAndroidServer().finally(initServer);
+async function boot(){
+  renderLoading('جارٍ تشغيل السيرفر المحلي...');
+  try{await startEmbeddedAndroidServer()}catch(e){renderFatal(e.message||String(e));return}
+  initServer();
+}
+window.addEventListener('error',e=>{if(!document.querySelector('#m').innerHTML.trim())renderFatal('خطأ: '+e.message)});
+boot();
 </script>
 </body>
 </html>
