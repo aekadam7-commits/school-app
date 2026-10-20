@@ -1,0 +1,18 @@
+{
+  "name": "ghiyabat-students",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Ghiyabat",
+  "description": "تسيير غيابات التلاميذ - Android APK and Windows EXE with embedded local server",
+  "scripts": {
+    "android:add": "npx cap add android",
+    "android:sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": { "@capacitor/cli": "^6.1.2" }
+}
