@@ -3,6 +3,12 @@
   "appName": "تسيير غيابات التلاميذ",
   "webDir": "www",
   "bundledWebRuntime": false,
-  "server": { "cleartext": true },
-  "android": { "allowMixedContent": true, "webContentsDebuggingEnabled": false }
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": false
+  }
 }
