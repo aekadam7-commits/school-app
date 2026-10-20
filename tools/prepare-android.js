@@ -10,7 +10,7 @@ if(step==='pre'){
   fs.rmSync(J('www','nodejs'),{recursive:true,force:true}); fs.renameSync(tmp,J('www','nodejs'));
   const cfg=JSON.parse(read(J('capacitor.config.json')));
   cfg.plugins={...(cfg.plugins||{}),CapacitorNodeJS:{nodeDir:'nodejs',startMode:'manual'},NodeJS:{nodeDir:'nodejs',startMode:'manual'}};
-  cfg.server={...(cfg.server||{}),cleartext:true}; write(J('capacitor.config.json'),JSON.stringify(cfg,null,2));
+  cfg.server={...(cfg.server||{}),cleartext:true,androidScheme:"http"}; write(J('capacitor.config.json'),JSON.stringify(cfg,null,2));
   console.log('Android Node runtime prepared');
 }
 if(step==='post'){
