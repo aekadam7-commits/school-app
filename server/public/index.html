@@ -79,6 +79,20 @@ nav button.ctn{margin-inline-start:auto}
 @keyframes ctf{from{opacity:0}to{opacity:1}}
 @keyframes ctu{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 @media print{.ctov{display:none!important}}
+.tt td{vertical-align:top;padding:4px;min-width:104px}.tt th:first-child{min-width:30px}
+.ch{display:block;width:100%;text-align:start;font-size:12px;line-height:1.35;margin:2px 0;padding:5px 7px;border-radius:8px;border:1px solid var(--bd2);background:var(--soft);color:var(--fg);cursor:pointer}
+.ch b{display:block;font-weight:700}.ch small{display:block;color:var(--muted);font-size:11px}
+.ch.g{background:rgba(30,138,76,.13);border-color:rgba(30,138,76,.4)}.ch.m{background:rgba(196,122,0,.14);border-color:rgba(196,122,0,.45)}
+.ch.bad{outline:2px solid var(--red);outline-offset:-1px}
+.ch.add{background:transparent;border-style:dashed;color:var(--muted);text-align:center}.ch.off{background:transparent;border:1px dotted var(--bd2);color:var(--muted);opacity:.55;text-align:center}
+.ch:hover,.ch:focus-visible{border-color:var(--ac);outline:2px solid var(--ac);outline-offset:-2px}
+.ov{position:fixed;inset:0;z-index:9990;display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;background:rgba(10,24,44,.55);overflow:auto}
+.mb{width:min(560px,100%);background:var(--card);color:var(--fg);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:16px}
+.mb h3{margin:0 0 8px;color:var(--ac2);font-size:17px}
+.sec{border:1px solid var(--bd);border-radius:12px;padding:10px;margin:8px 0;background:var(--soft2)}.sec>b{display:block;margin-bottom:6px;color:var(--ac2)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac2)}
+.badge{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;background:var(--soft);color:var(--ac2);font-weight:700}.badge.red{background:rgba(200,48,63,.14);color:var(--red)}
+@media print{.ov{display:none!important}.ch{border:1px solid #999;background:#fff;color:#000}.tt td{min-width:0}}
 </style>
 </head>
 <body>
@@ -94,15 +108,16 @@ const mk=()=>JSON.parse(JSON.stringify(def));
 function norm(){D.grp=D.grp||{};D.th=D.th||[6,12,18];if(!D.v2){D.cdTh=[3,7,15,30];D.v2=1}D.cdTh=D.cdTh||[3,7,15,30];while(D.cdTh.length<4)D.cdTh.push(0);EXC=null;DV++;if(D.cdWk===undefined)D.cdWk=true;D.lr=D.lr||3;D.set=D.set||{};if(D.set.sg===undefined)D.set.sg='';D.terms=D.terms||mk().terms;['ab','ju','lt','tp','cx','tt','ts','cr','cs'].forEach(k=>D[k]=D[k]||{});['nl','tc','st','cls','hol','ex','ta','pv','sx'].forEach(k=>D[k]=D[k]||[]);
     D.cls.forEach(c=>{if(typeof D.cs[c]==='undefined')D.cs[c]=[];if(!D.grp)D.grp={};if(!D.grp[c])D.grp[c]=[];});
     D.tc.forEach(x=>{x.cl=x.cl||[]});
-    if(!D.v4){D.v4=1;for(const c in D.tt){for(const wd in D.tt[c]){D.tt[c][wd].forEach(h=>{const key=wd+'_'+h;if(D.ts[c]&&D.ts[c][key]){if(!D.tt[c][key])D.tt[c][key]=[];if(!D.tt[c][key].some(x=>x.type==='all')){D.tt[c][key].push({type:'all',subj:D.ts[c][key],grp:null});}}});}}}
+    if(!D.v4){D.v4=1;try{for(const c in D.tt){const t=D.tt[c];if(!t||typeof t!=='object')continue;for(const wd in t){if(!Array.isArray(t[wd])||wd.indexOf('_')>-1)continue;t[wd].forEach(h=>{const key=wd+'_'+h;if(D.ts&&D.ts[c]&&D.ts[c][key]){if(!Array.isArray(t[key]))t[key]=[];if(!t[key].some(x=>x&&x.type==='all'))t[key].push({type:'all',subj:D.ts[c][key],grp:null})}})}}}catch(e){console.warn('v4',e)}}
+    try{normTT()}catch(e){console.warn('normTT',e)}
 }
 let D;try{D=Object.assign(mk(),JSON.parse(localStorage.getItem('abs3'))||{})}catch(e){D=mk()}
 norm();
 let token=localStorage.getItem('gh_token')||'', user=null, tmr=null, pollTimer=null, syncing=false, msg='غير متصل بالسيرفر';
 const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const base=native?'http://127.0.0.1:8787':'';const r=await fetch(base+url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
 const save=()=>{EXC=null;DV++;localStorage.setItem('abs3',JSON.stringify(D));push()};
-let isSyncing=false,pendingSave=false;
-function push(){if(!token)return;if(isSyncing){pendingSave=true;return}clearTimeout(tmr);tmr=setTimeout(async()=>{isSyncing=true;pendingSave=false;try{const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt;msg='تم الحفظ على السيرفر '+new Date().toLocaleTimeString();setStatus()}catch(e){msg='تعذر الحفظ، سيتم المحاولة لاحقاً: '+e.message;setStatus();pendingSave=true}finally{isSyncing=false;if(pendingSave)push()}},500)}
+let isSyncing=false,pendingSave=false,dirty=false;
+function push(){if(!token)return;dirty=true;if(isSyncing){pendingSave=true;return}clearTimeout(tmr);tmr=setTimeout(async()=>{isSyncing=true;pendingSave=false;try{const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt;if(!pendingSave)dirty=false;msg='تم الحفظ على السيرفر '+new Date().toLocaleTimeString();setStatus()}catch(e){msg='تعذر الحفظ، سيتم المحاولة لاحقاً: '+e.message;setStatus();pendingSave=true}finally{isSyncing=false;if(pendingSave)push()}},500)}
 function setStatus(){const e=document.getElementById('sy');if(e)e.textContent=msg}
 async function pull(){const r=await api('/api/state');if(r.state&&r.state.data){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));window._lastServerUpdate=r.updatedAt;msg='تم تحميل البيانات من السيرفر'}else{msg='لا توجد بيانات على السيرفر؛ تم رفع بيانات هذا الجهاز';const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt}R();setStatus()}
 async function login(){try{const username=$('#loginUser').value.trim(),password=$('#loginPass').value;const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});token=r.token;user=r.user;localStorage.setItem('gh_token',token);await pull();startPolling()}catch(e){alert(e.message)}}
@@ -110,7 +125,7 @@ async function setupAdmin(){try{const username=$('#setupUser').value.trim(),pass
 async function logout(){try{await api('/api/auth/logout',{method:'POST',body:'{}'})}catch{}token='';user=null;localStorage.removeItem('gh_token');clearInterval(pollTimer);msg='تم تسجيل الخروج';R()}
 async function initServer(){try{const st=await api('/api/auth/status');if(!token){renderGate(st.setupRequired);return}const me=await api('/api/auth/me');user=me.user;await pull();startPolling()}catch(e){token='';localStorage.removeItem('gh_token');renderGate(false,e.message)}}
 function renderGate(setup,error=''){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML=`<div class="card" style="max-width:520px;margin:8vh auto"><h2 style="color:var(--ac);margin-top:0">تسيير غيابات التلاميذ</h2><p>تسجيل الدخول إلى السيرفر المحلي وتخزين بيانات المؤسسة مركزيًا.</p>${error?`<p style="color:var(--red)">${esc(error)}</p>`:''}${setup?`<b>الإعداد لأول مرة — إنشاء حساب المسؤول</b><label>اسم المستخدم (3 أحرف على الأقل)</label><input id="setupUser" autocomplete="username" style="width:100%" placeholder="admin"><label style="margin-top:10px">كلمة المرور (8 أحرف على الأقل)</label><input id="setupPass" type="password" autocomplete="new-password" style="width:100%"><div class="r"><button class="p" onclick="setupAdmin()">إنشاء حساب المسؤول</button></div>`:`<b>تسجيل الدخول</b><label>اسم المستخدم</label><input id="loginUser" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" dir="ltr" placeholder="a.allel" style="width:100%"><label style="margin-top:10px">كلمة المرور</label><input id="loginPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" dir="ltr" style="width:100%" onkeydown="if(event.key==='Enter')login()"><div class="r"><button class="p" onclick="login()">دخول</button></div>`}<p style="font-size:12px">تأكد أن نافذة السيرفر مفتوحة على الجهاز الرئيسي. أنشئ حساب المسؤول مرة واحدة عند أول تشغيل.</p><div class="r" style="justify-content:center"><button onclick="openContact()">اتصل بنا</button></div></div>`}
-function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!token||syncing)return;try{syncing=true;const r=await api('/api/state');if(r.state&&r.state.data&&r.updatedAt&&r.updatedAt!==window._lastServerUpdate){const local=JSON.parse(localStorage.getItem('abs3')||'{}');if(JSON.stringify(local)!==JSON.stringify(r.state.data)){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));msg='تم تحديث البيانات من السيرفر';R()}window._lastServerUpdate=r.updatedAt;setStatus()}}catch(e){msg='انقطع الاتصال بالسيرفر';setStatus()}finally{syncing=false}},3000)}
+function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!token||syncing||dirty||isSyncing)return;try{syncing=true;const r=await api('/api/state');if(r.state&&r.state.data&&r.updatedAt&&r.updatedAt!==window._lastServerUpdate){const local=JSON.parse(localStorage.getItem('abs3')||'{}');if(JSON.stringify(local)!==JSON.stringify(r.state.data)){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));msg='تم تحديث البيانات من السيرفر';R()}window._lastServerUpdate=r.updatedAt;setStatus()}}catch(e){msg='انقطع الاتصال بالسيرفر';setStatus()}finally{syncing=false}},3000)}
 const DAYS=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],HR=[1,2,3,4,5,6,7,8,9];
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const dt=s=>new Date(s+'T00:00');
@@ -142,14 +157,14 @@ function runsAll(asOf){const key=DV+'|'+asOf;if(RC.key==key)return RC.map;const 
 const lvD=n=>{for(let i=3;i>=0;i--)if(D.cdTh[i]>0&&n>=D.cdTh[i])return i+1;return 0};
 function stat(s,ds){const x=absSplit(s.id,s.c,ds||[],s.grp);const r=runsAll(asOfDate())[s.id]||{len:0,start:''};return{...x,streak:r.len,start:r.start,h:x.u+x.eq,lv:lvD(r.len)}}
 function stN(s){const r=stat(s,[]);return r.lv?stat(s,rng(r.start,asOfDate())):r}
-const heldN=(c,dates)=>dates.reduce((n,d)=>n+heldForStudent(c,null,d).length,0);
-const schedN=(c,dates)=>dates.reduce((n,d)=>n+sched(c,d).length,0);
+const heldN=(c,dates,grp)=>dates.reduce((n,d)=>n+heldForStudent(c,grp||null,d).length,0);
+const schedN=(c,dates,grp)=>dates.reduce((n,d)=>n+plannedForStudent(c,grp||null,d).length,0);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clsSel=(all)=>`<select id="cs">${all?`<option value="" ${!S.cls?'selected':''}>كل الأقسام</option>`:''}${D.cls.map(c=>`<option ${c==S.cls?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
 const perBar=(all)=>`الفترة: <select onchange="S.per=this.value;R()">${PERS.map(([k,l])=>`<option value="${k}" ${S.per==k?'selected':''}>${l}</option>`).join('')}</select><input type="date" value="${S.date}" onchange="S.date=this.value;R()">${all===undefined?'':' القسم: '+clsSel(all)}`;
 const isAdmin=()=>!!user&&(user.role||'admin')==='admin';
 function nav(){$('#nav').innerHTML=TABS.map((t,i)=>i==9&&!isAdmin()?'':`<button class="${i==tab?'on':''}" onclick="tab=${i};R()">${t}</button>`).join('')+`<button class="ctn" onclick="openContact()">اتصل بنا</button>`}
-function R(){if(!token){renderGate(false);return}if(tab==9&&!isAdmin())tab=0;nav();if(!S.cls&&D.cls.length&&!ALLOW.includes(tab))S.cls=D.cls[0];[vH,v0,v1,v2,v3,v4,v5,v6,vE,vU][tab]();const cs=$('#cs');if(cs)cs.onchange=e=>{S.cls=e.target.value;R()}}
+function R(){if(!token){renderGate(false);return}if(tab==9&&!isAdmin())tab=0;nav();if(!S.cls&&D.cls.length&&!ALLOW.includes(tab))S.cls=D.cls[0];try{[vH,v0,v1,v2,v3,v4,v5,v6,vE,vU][tab]()}catch(e){console.error(e);$('#m').innerHTML='<div class="card"><b style="color:var(--red)">حدث خطأ أثناء عرض هذه الصفحة</b><p>'+esc(e&&e.message||e)+'</p><div class="r"><button class="p" onclick="tab=0;R()">العودة للرئيسية</button><button onclick="R()">إعادة المحاولة</button></div></div>'}const cs=$('#cs');if(cs)cs.onchange=e=>{S.cls=e.target.value;R()}}
 function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';x.onload=ok;x.onerror=()=>no(new Error('تعذر تحميل مكتبة Excel'));document.head.appendChild(x)})}
 async function saveBlob(name,blob){const cap=window.Capacitor,nat=!!(cap&&cap.isNativePlatform&&cap.isNativePlatform());if(nat){try{const FS=cap.Plugins.Filesystem,SH=cap.Plugins.Share;const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(blob)});const w=await FS.writeFile({path:name,data:b64,directory:'CACHE'});await SH.share({title:name,url:w.uri,dialogTitle:'حفظ أو مشاركة الملف'});return}catch(e){if(e&&/cancel/i.test(String(e.message||e)))return;alert('تعذر حفظ الملف: '+(e&&e.message||e))}}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},2000)}
 async function exportSheets(name,sheets){let blob,ext='xlsx';try{await loadXLSX();const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};sheets.forEach(s=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s.rows),s.n.slice(0,31)));blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}catch(e){ext='csv';const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';blob=new Blob(['﻿'+sheets.map(s=>s.n+'\n'+s.rows.map(r=>r.map(q).join(',')).join('\n')).join('\n\n')],{type:'text/csv;charset=utf-8'})}await saveBlob(name+'.'+ext,blob)}
@@ -160,7 +175,7 @@ function v0(){const f=[['year','السنة الدراسية'],['school','اسم 
 async function listBk(){const e=$('#bkl');if(!e)return;try{const r=await api('/api/backups');e.innerHTML=r.backups.length?`<div class="t"><table><tr><th>النسخة</th><th>التاريخ</th><th></th></tr>${r.backups.map(x=>`<tr><td style="direction:ltr">${esc(x.name)}</td><td>${new Date(x.time).toLocaleString()}</td><td><button onclick="restoreBk('${esc(x.name)}')">استرجاع</button></td></tr>`).join('')}</table></div>`:'<p>لا توجد نسخ بعد.</p>'}catch(er){e.innerHTML='<p style="color:var(--red)">'+esc(er.message)+'</p>'}}
 async function restoreBk(n){if(!confirm('استرجاع هذه النسخة سيستبدل البيانات الحالية (تُنشأ نسخة أمان قبل ذلك). متابعة؟'))return;try{await api('/api/restore',{method:'POST',body:JSON.stringify({name:n})});await pull();alert('تم الاسترجاع')}catch(e){alert(e.message)}}
 function bk(){saveBlob('absences-backup.json',new Blob([JSON.stringify(D)],{type:'application/json'}))}
-function rs(i){const f=i.files[0];if(!f)return;f.text().then(t=>{D=Object.assign(mk(),JSON.parse(t));norm();save();R()})}
+function rs(i){const f=i.files[0];if(!f)return;f.text().then(t=>{let o;try{o=JSON.parse(t)}catch(e){return alert('ملف النسخة الاحتياطية غير صالح')}D=Object.assign(mk(),o);norm();save();R()})}
 const X=['علوم تجريبية','رياضيات','تقني رياضي (هندسة ميكانيكية)','تقني رياضي (هندسة كهربائية)','تقني رياضي (هندسة مدنية)','تقني رياضي (هندسة الطرائق)','تسيير واقتصاد','آداب وفلسفة','لغات أجنبية'];
 const SP={1:['جذع مشترك علوم وتكنولوجيا','جذع مشترك آداب'],2:X,3:X};
 const FL=[['sn','الرقم المدرسي'],['l','اللقب'],['p','الاسم'],['bd','تاريخ الميلاد','date'],['bp','مكان الميلاد'],['ph','هاتف الولي'],['ad','العنوان']];
@@ -187,50 +202,188 @@ function expDis(){const L=D.st.filter(s=>s.x=='مفصول');exportSheets('الت
 
 // ----------------- استعمال الزمن -----------------
 const SUBJ=['اللغة العربية وآدابها','الرياضيات','العلوم الفيزيائية','علوم الطبيعة والحياة','اللغة الفرنسية','اللغة الإنجليزية','التاريخ والجغرافيا','العلوم الإسلامية','الفلسفة','التربية البدنية والرياضية','الإعلام الآلي','اللغة الأمازيغية','اللغة الألمانية','اللغة الإسبانية','اللغة الإيطالية','التكنولوجيا (هندسة ميكانيكية)','التكنولوجيا (هندسة كهربائية)','التكنولوجيا (هندسة مدنية)','التكنولوجيا (هندسة الطرائق)','الاقتصاد والمناجمنت','القانون','المحاسبة والتسيير المالي','التربية التشكيلية','التربية الموسيقية'];
-const REAS=['ندوة','يوم دراسي','مرض','ظروف عائلية','بدون مبرر','منصب شاغر'];
-const allSubj=()=>[...SUBJ,...D.sx];
+const REAS=['ندوة','يوم دراسي','تكوين','مرض','إجازة','ظروف عائلية','بدون مبرر','منصب شاغر','نشاط مدرسي','ظرف طارئ','أخرى'];
+const PE='التربية البدنية والرياضية';
+const allSubj=()=>[...SUBJ,...(D.sx||[])];
 const subjOpts=cur=>{const all=allSubj();if(cur&&!all.includes(cur))all.push(cur);return`<option value="">— المادة —</option>${all.map(s=>`<option ${s==cur?'selected':''}>${esc(s)}</option>`).join('')}<option value="__new">＋ مادة أخرى...</option>`};
+function subjNew(sel){if(sel.value!=='__new')return;const n=(prompt('اسم المادة الجديدة:')||'').trim();if(!n){sel.value='';return}if(!allSubj().includes(n)){D.sx.push(n);save()}sel.innerHTML=subjOpts(n)}
 const teachersOf=(c,subj)=>subj?D.tc.filter(x=>x.m==subj&&(x.cl||[]).includes(c)):[];
-function mkSubj(v,cb){if(v!='__new'){cb(v);return}const n=(prompt('اسم المادة الجديدة:')||'').trim();if(!n){R();return}if(!allSubj().includes(n))D.sx.push(n);cb(n)}
+const tById=id=>D.tc.find(x=>x.id==id);
 const defTT=()=>({0:[1,2,3,4,5,6,7,8],1:[1,2,3,4,5,6,7,8],2:[1,2,3,4],3:[1,2,3,4,5,6,7,8],4:[1,2,3,4,5,6,7,8]});
-function addTc(){const n=$('#tcn').value.trim(),m=$('#tcm').value;if(!n||!m||m=='__new')return alert('أكمل البيانات');D.tc.push({id:'t'+Date.now(),n,m,cl:[]});save();R()}
-function delTc(id){if(!confirm('حذف الأستاذ؟'))return;D.tc=D.tc.filter(t=>t.id!=id);save();R()}
-function tcCls(id,i,el){const x=D.tc.find(y=>y.id==id),c=D.cls[i];if(!x)return;x.cl=x.cl||[];if(el.checked){if(!x.cl.includes(c))x.cl.push(c)}else x.cl=x.cl.filter(y=>y!=c);save()}
 
-function drawCell(c, wd, h){const cell=(D.tt[c]||{})[wd+'_'+h]||[];if(cell.length===0){return`<button onclick="editSlot('${c}',${wd},${h})" style="font-size:11px">+ إضافة</button>`;}return cell.map((opt,i)=>{if(opt.type==='all')return`<div style="font-size:11px;margin-bottom:2px;background:#eef;padding:2px;border-radius:3px"><b>${esc(opt.subj)}</b> <button style="padding:0 4px;height:auto;font-size:10px" onclick="editSlot('${c}',${wd},${h})">✎</button></div>`;if(opt.type==='grp')return`<div style="font-size:11px;margin-bottom:2px;background:#efe;padding:2px;border-radius:3px"><b>[${esc(opt.grp)}]</b> ${esc(opt.subj)}</div>`;if(opt.type==='comb')return`<div style="font-size:11px;margin-bottom:2px;background:#fee;padding:2px;border-radius:3px"><b>مشترك مع:</b> ${esc(opt.with)}</div>`;}).join('')+`<button onclick="editSlot('${c}',${wd},${h})" style="padding:2px;font-size:10px;margin-top:2px">تعديل</button>`;}
+// تنظيف وتوحيد بنية الجدول (مصدر واحد للحقيقة: الخلايا "يوم_ساعة")
+function normTT(){
+  D.tt=(D.tt&&typeof D.tt==='object'&&!Array.isArray(D.tt))?D.tt:{};
+  D.ta=Array.isArray(D.ta)?D.ta.filter(a=>a&&a.tid&&a.a):[];
+  D.sx=Array.isArray(D.sx)?D.sx:[];
+  D.cls.forEach(c=>{if(!D.tt[c]||typeof D.tt[c]!=='object'||Array.isArray(D.tt[c]))D.tt[c]={0:[1,2,3,4,5,6,7,8],1:[1,2,3,4,5,6,7,8],2:[1,2,3,4],3:[1,2,3,4,5,6,7,8],4:[1,2,3,4,5,6,7,8]}});
+  for(const c in D.tt){
+    const t=D.tt[c];if(!t||typeof t!=='object'){delete D.tt[c];continue}
+    for(let wd=0;wd<7;wd++){
+      const set=new Set(Array.isArray(t[wd])?t[wd].map(Number).filter(h=>h>=1&&h<=12):[]);
+      for(let h=1;h<=12;h++){
+        const k=wd+'_'+h;if(!(k in t))continue;
+        let cell=Array.isArray(t[k])?t[k].filter(e=>e&&typeof e==='object'&&(e.type==='all'||e.type==='grp'||e.type==='comb')):[];
+        cell=cell.map(e=>e.type==='comb'&&(!e.subj||e.subj==='رياضة')?{...e,subj:'التربية البدنية والرياضية'}:e);
+        if(cell.length){t[k]=cell;set.add(h)}else delete t[k];
+      }
+      if(set.size||Array.isArray(t[wd]))t[wd]=[...set].sort((a,b)=>a-b);
+    }
+  }
+}
+
+// ---- أدوات القراءة
+function slotsOf(c,wd){const t=D.tt[c]||{};const s=new Set(Array.isArray(t[wd])?t[wd]:[]);for(let h=1;h<=12;h++){const x=t[wd+'_'+h];if(Array.isArray(x)&&x.length)s.add(h)}return[...s].sort((a,b)=>a-b)}
+const cellOf=(c,wd,h)=>{const x=(D.tt[c]||{})[wd+'_'+h];return Array.isArray(x)?x:[]};
+const entriesFor=(cell,grp)=>cell.filter(e=>e&&(e.type==='all'||e.type==='comb'||(e.type==='grp'&&!!grp&&e.grp===grp)));
+const tidOf=(c,e)=>{if(!e)return'';if(e.tid&&tById(e.tid))return e.tid;const m=teachersOf(c,e.subj);return m.length==1?m[0].id:''};
+
+// ---- أدوات الكتابة
+function ensureTT(c){if(!D.tt[c]||typeof D.tt[c]!=='object')D.tt[c]=defTT();return D.tt[c]}
+function openHour(c,wd,h){const t=ensureTT(c);if(!Array.isArray(t[wd]))t[wd]=[];if(!t[wd].includes(h)){t[wd].push(h);t[wd].sort((a,b)=>a-b)}}
+function closeHour(c,wd,h){const t=ensureTT(c);if(Array.isArray(t[wd]))t[wd]=t[wd].filter(x=>x!==h);delete t[wd+'_'+h]}
+function putCell(c,wd,h,arr){const t=ensureTT(c);openHour(c,wd,h);if(arr&&arr.length)t[wd+'_'+h]=arr;else delete t[wd+'_'+h]}
+function dropComb(c,wd,h){cellOf(c,wd,h).forEach(e=>{if(e.type!=='comb')return;const p=e.with,pc=cellOf(p,wd,h);if(pc.some(x=>x.type==='comb'&&x.with===c))putCell(p,wd,h,pc.filter(x=>!(x.type==='comb'&&x.with===c)))})}
+function assignT(c,tid){const t=tById(tid);if(t&&!(t.cl||[]).includes(c)){t.cl=t.cl||[];t.cl.push(c)}}
+
+// ---- الحصص حسب التلميذ/الفوج + الحصص الضائعة
+let AC={k:-1,m:{}};
+function absOn(d){if(AC.k!==DV)AC={k:DV,m:{}};return AC.m[d]||(AC.m[d]=D.ta.filter(a=>a.a<=d&&d<=(a.b||a.a)))}
+function plannedForStudent(c,grp,d){if(isHol(d))return[];const wd=dt(d).getDay(),hh=[];slotsOf(c,wd).forEach(h=>{const cell=cellOf(c,wd,h);if(!cell.length||entriesFor(cell,grp).length)hh.push(h)});return hh}
+function L_D(d,c,grp){
+  const res={};if(isHol(d))return res;
+  const ab=absOn(d),cr=(D.cr&&D.cr[d])||null;if(!ab.length&&!cr)return res;
+  const wd=dt(d).getDay();
+  slotsOf(c,wd).forEach(h=>{
+    const cell=cellOf(c,wd,h),man=cr&&cr[c+'|'+h],mr=man&&man.t?man.t:'';
+    const ents=cell.length?entriesFor(cell,grp):[];
+    if(cell.length&&!ents.length)return;
+    const e=ents[0]||null;let reason='',tid='';
+    if(mr){reason=mr;tid=e?tidOf(c,e):''}
+    else if(e&&ab.length){const t=tidOf(c,e);if(t){const a=ab.find(x=>x.tid==t&&(!x.hrs||!x.hrs.length||x.hrs.includes(h)));if(a){reason=a.reason||'غياب الأستاذ';tid=t}}}
+    if(reason)res[h]={subj:e?e.subj:'',reason,tid,auto:!mr,type:e?e.type:''};
+  });
+  return res;
+}
+function heldForStudent(c,grp,d){const p=plannedForStudent(c,grp,d);if(!p.length||(D.set&&D.set.exl===false))return p;const L=L_D(d,c,grp);return p.filter(h=>!L[h])}
+function sched(c,s){if(isHol(s))return[];return slotsOf(c,dt(s).getDay())}
+function lostAny(d,c){const g=D.grp[c]||[],r={};(g.length?g.map(x=>x.name):[null]).forEach(n=>{const L=L_D(d,c,n);for(const h in L)if(!r[h])r[h]=L[h]});return r}
+
+function tSlots(tid){const r=[];D.cls.forEach(c=>{for(let wd=0;wd<7;wd++)slotsOf(c,wd).forEach(h=>cellOf(c,wd,h).forEach(e=>{if(tidOf(c,e)==tid)r.push({c,wd,h,e})}))});return r}
+function conflicts(){const m={};D.cls.forEach(c=>{for(let wd=0;wd<7;wd++)slotsOf(c,wd).forEach(h=>cellOf(c,wd,h).forEach(e=>{const t=tidOf(c,e);if(!t)return;const k=t+'|'+wd+'_'+h,u=e.type==='comb'?[c,e.with].sort().join(' + '):c+(e.type==='grp'?' ('+e.grp+')':'');(m[k]=m[k]||new Set()).add(u)}))});const r={};for(const k in m)if(m[k].size>1)r[k]=[...m[k]];return r}
+function hrsSum(c){const m={};let tot=0;for(let wd=0;wd<7;wd++)slotsOf(c,wd).forEach(h=>{const cell=cellOf(c,wd,h);if(!cell.length)return;tot++;const seen=new Set();cell.forEach(e=>{const k=e.type==='grp'?e.subj+' ['+e.grp+']':e.subj;if(seen.has(k))return;seen.add(k);m[k]=(m[k]||0)+1})});return{m,tot}}
+const wdays=c=>{const s=new Set([0,1,2,3,4]);for(let wd=5;wd<7;wd++)if(slotsOf(c,wd).length)s.add(wd);return[...s].sort((a,b)=>a-b)};
+function absHours(a){const sl=tSlots(a.tid);let n=0;rng(a.a,a.b||a.a).forEach(d=>{if(isHol(d))return;const wd=dt(d).getDay();sl.forEach(x=>{if(x.wd==wd&&(!a.hrs||!a.hrs.length||a.hrs.includes(x.h)))n++})});return n}
+
+// ---- الأساتذة
+function addTc(){const n=$('#tcn').value.trim(),m=$('#tcm').value;if(!n||!m||m=='__new')return alert('أدخل اسم الأستاذ واختر المادة');D.tc.push({id:'t'+Date.now(),n,m,cl:[]});save();R()}
+function renTc(id){const x=tById(id);if(!x)return;const n=(prompt('اسم الأستاذ:',x.n)||'').trim();if(!n)return;x.n=n;save();R()}
+function delTc(id){const x=tById(id);if(!x)return;const na=D.ta.filter(a=>a.tid==id).length;if(!confirm('حذف الأستاذ «'+x.n+'»؟'+(na?'\nسيُحذف أيضًا '+na+' تسجيل غياب مرتبط به.':'')))return;D.tc=D.tc.filter(t=>t.id!=id);D.ta=D.ta.filter(a=>a.tid!=id);for(const c in D.tt)for(const k in D.tt[c])if(Array.isArray(D.tt[c][k])&&k.indexOf('_')>0)D.tt[c][k].forEach(e=>{if(e&&e.tid==id)e.tid=''});save();R()}
+function tcCls(id,i,el){const x=tById(id),c=D.cls[i];if(!x)return;x.cl=x.cl||[];if(el.checked){if(!x.cl.includes(c))x.cl.push(c)}else x.cl=x.cl.filter(y=>y!=c);save()}
+function addTA(){const tid=$('#ta_t').value,a=$('#ta_a').value,b=$('#ta_b').value||a,reason=$('#ta_r').value,n=($('#ta_n').value||'').trim();const hrs=HR.filter(h=>{const e=document.getElementById('ta_h'+h);return e&&e.checked});if(!tid||!a)return alert('اختر الأستاذ وتاريخ الغياب');if(b<a)return alert('تاريخ النهاية قبل تاريخ البداية');if(rng(a,b).length>400)return alert('الفترة طويلة جدًا');D.ta.push({id:'a'+Date.now(),tid,a,b,reason,hrs,n});save();R()}
+function delTA(id){if(!confirm('حذف تسجيل الغياب هذا؟'))return;D.ta=D.ta.filter(x=>x.id!=id);save();R()}
+
+// ---- تعديل الحصص
 function closeModal(){const m=document.getElementById('modal');if(m)m.remove()}
-function delSlot(c,wd,h){const key=wd+'_'+h;if(D.tt[c])delete D.tt[c][key];save();closeModal();R()}
-function setSlotAll(c,wd,h){const subj=$('#opt_all_subj').value;if(!subj)return alert('اختر المادة');if(!D.tt[c])D.tt[c]={};D.tt[c][wd+'_'+h]=[{type:'all',subj}];save();closeModal();R();}
-function setSlotGrp(c,wd,h){const grps=D.grp[c]||[];let arr=[];grps.forEach(g=>{const s=$('#opt_grp_'+CSS.escape(g.name)).value;if(s)arr.push({type:'grp',grp:g.name,subj:s});});if(arr.length===0)return alert('اختر مادة لفوج واحد على الأقل');if(!D.tt[c])D.tt[c]={};D.tt[c][wd+'_'+h]=arr;save();closeModal();R();}
-function setSlotComb(c,wd,h){const wth=$('#opt_comb_cls').value;if(!wth)return alert('اختر القسم');if(!D.tt[c])D.tt[c]={};D.tt[c][wd+'_'+h]=[{type:'comb',with:wth,subj:'رياضة'}];save();closeModal();R();}
-function editSlot(c, wd, h){const key=wd+'_'+h;const cell=(D.tt[c]||{})[key]||[];const grps=D.grp[c]||[];let html=`<div class="card" style="position:fixed;top:10%;left:50%;transform:translateX(-50%);z-index:999;width:90%;max-width:500px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5)"><b>تعديل حصة (${DAYS[wd]} - ساعة ${h})</b><div class="r"><button onclick="closeModal()">إغلاق</button></div>`;html+=`<div style="border:1px solid #ccc;padding:10px;margin:5px 0"><b>1. حصة عادية (القسم كامل)</b><br><select id="opt_all_subj">${subjOpts(cell.find(x=>x.type==='all')?.subj||'')}</select> <button class="p" onclick="setSlotAll('${c}',${wd},${h})">حفظ</button></div>`;if(grps.length>0){html+=`<div style="border:1px solid #ccc;padding:10px;margin:5px 0"><b>2. حصة مقسمة (أفواج)</b><br>`;grps.forEach(g=>{const cur=cell.find(x=>x.type==='grp'&&x.grp===g.name)?.subj||'';html+=`<div style="margin:5px 0">${esc(g.name)}: <select id="opt_grp_${esc(g.name)}">${subjOpts(cur)}</select></div>`;});html+=`<button class="p" onclick="setSlotGrp('${c}',${wd},${h})">حفظ</button></div>`;}html+=`<div style="border:1px solid #ccc;padding:10px;margin:5px 0"><b>3. حصة مشتركة مع قسم آخر</b><br><select id="opt_comb_cls">${D.cls.map(x=>`<option ${cell.find(y=>y.type==='comb')?.with===x?'selected':''}>${esc(x)}</option>`).join('')}</select> <button class="p" onclick="setSlotComb('${c}',${wd},${h})">حفظ</button></div>`;html+=`<div style="border:1px solid #f00;padding:10px;margin:5px 0"><button onclick="delSlot('${c}',${wd},${h})">حذف الحصة</button></div></div>`;const d=document.createElement('div');d.id='modal';d.innerHTML=html;document.body.appendChild(d);}
-function v2(){const c=S.cls,t=D.tt[c]||{};$('#m').innerHTML=`<div class="card"><b>الأساتذة</b><div class="r"><input id="tcn" placeholder="اسم الأستاذ"><select id="tcm">${subjOpts('')}</select><button class="p" onclick="addTc()">+ إضافة</button></div>${D.tc.length?`<div class="t"><table><tr><th>الأستاذ</th><th>المادة</th><th>الأقسام</th><th></th></tr>${D.tc.map(x=>`<tr><td>${esc(x.n)}</td><td>${esc(x.m)}</td><td><details><summary>${(x.cl||[]).length} قسم</summary>${D.cls.map((k,i)=>`<label><input type="checkbox" ${(x.cl||[]).includes(k)?'checked':''} onchange="tcCls('${x.id}',${i},this)"> ${esc(k)}</label>`).join('')}</details></td><td><button onclick="delTc('${x.id}')">✕</button></td></tr>`).join('')}</table></div>`:''}</div><div class="card">القسم: ${clsSel(false)}<div class="t"><table><tr><th></th>${HR.map(h=>`<th>${h}</th>`).join('')}</tr>${[0,1,2,3,4,6].map(d=>`<tr><th>${DAYS[d]}</th>${HR.map(h=>`<td style="padding:4px;vertical-align:top">${drawCell(c,d,h)}</td>`).join('')}</tr>`).join('')}</table></div></div>`}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+function tOpts(c,subj,cur){const L=subj?D.tc.filter(x=>x.m==subj):[],inC=L.filter(x=>(x.cl||[]).includes(c)),rest=L.filter(x=>!(x.cl||[]).includes(c));const sel=cur&&L.some(x=>x.id==cur)?cur:(inC.length==1?inC[0].id:'');const o=(x,s)=>`<option value="${esc(x.id)}" ${x.id==sel?'selected':''}>${esc(x.n)}${s}</option>`;return`<option value="">— الأستاذ (اختياري) —</option>${inC.map(x=>o(x,'')).join('')}${rest.map(x=>o(x,' (سيُسنَد له هذا القسم)')).join('')}`}
+function fillT(id,ci,subj){const e=document.getElementById(id);if(e)e.innerHTML=tOpts(D.cls[ci],subj,'')}
+function slotVals(sid,tid){const s=document.getElementById(sid),t=document.getElementById(tid);return{subj:s?s.value:'',tid:t?t.value:''}}
+function setSlotAll(ci,wd,h){const c=D.cls[ci],v=slotVals('s_all','t_all');if(!v.subj||v.subj=='__new')return alert('اختر المادة');dropComb(c,wd,h);putCell(c,wd,h,[{type:'all',subj:v.subj,tid:v.tid||''}]);if(v.tid)assignT(c,v.tid);save();closeModal();R()}
+function setSlotGrp(ci,wd,h){const c=D.cls[ci],grps=D.grp[c]||[],arr=[];grps.forEach((g,i)=>{const v=slotVals('s_g'+i,'t_g'+i);if(v.subj&&v.subj!='__new'){arr.push({type:'grp',grp:g.name,subj:v.subj,tid:v.tid||''});if(v.tid)assignT(c,v.tid)}});if(!arr.length)return alert('اختر مادة لفوج واحد على الأقل');dropComb(c,wd,h);putCell(c,wd,h,arr);save();closeModal();R()}
+function setSlotComb(ci,wd,h){const c=D.cls[ci],pe=document.getElementById('c_with'),p=pe?D.cls[+pe.value]:'',v=slotVals('s_comb','t_comb');if(!p||p===c)return alert('اختر القسم الشريك');if(!v.subj||v.subj=='__new')return alert('اختر المادة');const pc=cellOf(p,wd,h);if(pc.length&&!pc.some(x=>x.type==='comb'&&x.with===c)&&!confirm('للقسم «'+p+'» حصة أخرى في نفس الساعة وسيتم استبدالها. متابعة؟'))return;dropComb(c,wd,h);dropComb(p,wd,h);putCell(c,wd,h,[{type:'comb',with:p,subj:v.subj,tid:v.tid||''}]);putCell(p,wd,h,[{type:'comb',with:c,subj:v.subj,tid:v.tid||''}]);if(v.tid){assignT(c,v.tid);assignT(p,v.tid)}save();closeModal();R()}
+function clearSlot(ci,wd,h){const c=D.cls[ci];dropComb(c,wd,h);putCell(c,wd,h,[]);save();closeModal();R()}
+function closeSlot(ci,wd,h){const c=D.cls[ci];dropComb(c,wd,h);closeHour(c,wd,h);save();closeModal();R()}
+function editSlot(ci,wd,h){
+  const c=D.cls[ci];if(c===undefined)return;closeModal();
+  const cell=cellOf(c,wd,h),grps=D.grp[c]||[],al=cell.find(x=>x.type==='all'),cb=cell.find(x=>x.type==='comb');
+  const sel=(id,cur,tid,tidId)=>`<select id="${id}" style="width:100%" onchange="subjNew(this);fillT('${tidId}',${ci},this.value)">${subjOpts(cur||'')}</select><select id="${tidId}" style="width:100%;margin-top:6px">${tOpts(c,cur||'',tid||'')}</select>`;
+  let html=`<div class="ov" onclick="if(event.target===this)closeModal()"><div class="mb"><h3>${esc(c)} — ${DAYS[wd]} — الساعة ${h}</h3>`;
+  html+=`<div class="sec"><b>حصة عادية (القسم كاملًا)</b>${sel('s_all',al&&al.subj,al&&al.tid,'t_all')}<div class="r"><button class="p" onclick="setSlotAll(${ci},${wd},${h})">حفظ</button></div></div>`;
+  if(grps.length)html+=`<div class="sec"><b>حصة مقسّمة (أفواج)</b>${grps.map((g,i)=>{const e=cell.find(x=>x.type==='grp'&&x.grp===g.name);return`<div style="margin:6px 0"><label>${esc(g.name)}</label>${sel('s_g'+i,e&&e.subj,e&&e.tid,'t_g'+i)}</div>`}).join('')}<div class="r"><button class="p" onclick="setSlotGrp(${ci},${wd},${h})">حفظ الأفواج</button></div></div>`;
+  if(D.cls.length>1){const oth=D.cls.map((x,i)=>[x,i]).filter(([x])=>x!==c);html+=`<div class="sec"><b>حصة مشتركة مع قسم آخر</b><select id="c_with" style="width:100%;margin-bottom:6px">${oth.map(([x,i])=>`<option value="${i}" ${cb&&cb.with===x?'selected':''}>${esc(x)}</option>`).join('')}</select>${sel('s_comb',cb?cb.subj:PE,cb&&cb.tid,'t_comb')}<div class="r"><button class="p" onclick="setSlotComb(${ci},${wd},${h})">حفظ (تُسجَّل في القسمين)</button></div></div>`}
+  html+=`<div class="sec"><div class="r"><button onclick="clearSlot(${ci},${wd},${h})">بدون مادة (تبقى حصة قائمة)</button><button onclick="closeSlot(${ci},${wd},${h})" style="color:var(--red)">لا توجد حصة في هذه الساعة</button><button onclick="closeModal()">إغلاق</button></div></div></div></div>`;
+  const d=document.createElement('div');d.id='modal';d.innerHTML=html;document.body.appendChild(d);
+}
+
+// ---- نسخ الجدول وإدارة الأيام
+function clearTT(c){for(let wd=0;wd<7;wd++)slotsOf(c,wd).forEach(h=>dropComb(c,wd,h));D.tt[c]={}}
+function copyTT(){const s=document.getElementById('cpf'),c=S.cls;if(!s||!s.value||!c)return;const src=D.cls[+s.value];if(!src||src===c)return;if(!confirm('نسخ جدول «'+src+'» إلى «'+c+'»؟\nسيُستبدل الجدول الحالي (الحصص المشتركة لا تُنسخ).'))return;const old=D.tt[src]||{};clearTT(c);const t=ensureTT(c);for(let wd=0;wd<7;wd++){const sl=slotsOf(src,wd);if(!sl.length&&!Array.isArray(old[wd]))continue;t[wd]=[...sl];sl.forEach(h=>{const cell=cellOf(src,wd,h).filter(e=>e.type!=='comb'&&(e.type!=='grp'||(D.grp[c]||[]).some(g=>g.name===e.grp))).map(e=>({...e}));if(cell.length)t[wd+'_'+h]=cell})}save();R()}
+function addDay(ci,wd){const c=D.cls[ci];if(c===undefined)return;ensureTT(c)[wd]=[1,2,3,4];save();R()}
+function rmDay(ci,wd){const c=D.cls[ci];if(c===undefined||!confirm('إزالة يوم '+DAYS[wd]+' من جدول «'+c+'» مع كل حصصه؟'))return;slotsOf(c,wd).forEach(h=>{dropComb(c,wd,h);closeHour(c,wd,h)});ensureTT(c)[wd]=[];save();R()}
+
+// ---- العرض
+function chipTxt(c,e){const t=tById(tidOf(c,e));return`<b>${esc(e.subj)}</b>${t?`<small>${esc(t.n)}</small>`:''}`}
+function drawCell(ci,wd,h,CF){
+  const c=D.cls[ci],open=slotsOf(c,wd).includes(h),cell=cellOf(c,wd,h),a=`onclick="editSlot(${ci},${wd},${h})" role="button" tabindex="0"`;
+  if(!cell.length)return open?`<div class="ch add" ${a}>بدون مادة ＋</div>`:`<div class="ch off" ${a}>＋</div>`;
+  return cell.map(e=>{const t=tidOf(c,e),bad=t&&CF[t+'|'+wd+'_'+h];const cl='ch '+(e.type==='grp'?'g':e.type==='comb'?'m':'')+(bad?' bad':'');const pre=e.type==='grp'?`<small>فوج: ${esc(e.grp)}</small>`:e.type==='comb'?`<small>مشترك مع ${esc(e.with)}</small>`:'';return`<div class="${cl}" ${a}>${pre}${chipTxt(c,e)}${bad?'<small style="color:var(--red)">⚠ تعارض</small>':''}</div>`}).join('')}
+function tvGrid(){
+  const c=S.cls;if(!c)return'<div class="card"><p>أنشئ قسمًا أولاً من تبويب «الأقسام والتلاميذ».</p></div>';
+  const ci=D.cls.indexOf(c),days=wdays(c),CF=conflicts(),hs=hrsSum(c);
+  const rows=HR.map(h=>`<tr><th>${h}</th>${days.map(d=>`<td>${drawCell(ci,d,h,CF)}</td>`).join('')}</tr>`).join('');
+  const confl=Object.keys(CF).map(k=>{const[t,w]=k.split('|'),[wd,h]=w.split('_'),x=tById(t);return`<li>${esc(x?x.n:'؟')} — ${DAYS[wd]} الساعة ${h}: ${CF[k].map(esc).join(' | ')}</li>`});
+  const extra=[5,6].map(wd=>days.includes(wd)?`<button onclick="rmDay(${ci},${wd})">✕ إزالة ${DAYS[wd]}</button>`:`<button onclick="addDay(${ci},${wd})">＋ إضافة ${DAYS[wd]}</button>`).join(' ');
+  const others=D.cls.map((x,i)=>[x,i]).filter(([x])=>x!==c);
+  return`<div class="card np"><div class="r">القسم: ${clsSel(false)} <button onclick="printPage()">🖨 طباعة</button>${others.length?` نسخ جدول من: <select id="cpf">${others.map(([x,i])=>`<option value="${i}">${esc(x)}</option>`).join('')}</select><button onclick="copyTT()">نسخ</button>`:''}</div><div class="r">${extra}</div><small>اضغط على أي خانة لتحديد المادة والأستاذ. «بدون مادة» = حصة قائمة لم تُحدَّد مادتها (تُحتسب في الغيابات). «＋» الباهتة = لا توجد حصة في هذه الساعة.</small></div>
+  <div class="card"><b>جدول القسم: ${esc(c)}</b><div class="t"><table class="tt"><tr><th></th>${days.map(d=>`<th>${DAYS[d]}</th>`).join('')}</tr>${rows}</table></div>
+  <p>إجمالي الحصص المحدّدة أسبوعيًا: <b>${hs.tot}</b></p><div>${Object.entries(hs.m).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span class="badge" style="margin:2px">${esc(k)}: ${n}</span>`).join(' ')}</div>
+  ${confl.length?`<div class="sec np" style="margin-top:12px"><b style="color:var(--red)">⚠ تعارضات في الجداول (أستاذ في قسمين في الوقت نفسه)</b><ul style="margin:6px 0;padding-inline-start:20px">${confl.join('')}</ul></div>`:''}</div>`}
+function tvTeachers(){
+  return`<div class="card"><b>الأساتذة</b><div class="r np"><input id="tcn" placeholder="اسم الأستاذ"><select id="tcm" onchange="subjNew(this)">${subjOpts('')}</select><button class="p" onclick="addTc()">+ إضافة</button></div>
+  <p>لتسجيل «منصب شاغر» أضِف أستاذًا باسم «منصب شاغر» وحدّد مادته وأقسامه، ثم سجّل غيابه في تبويب «غياب الأساتذة».</p>
+  ${D.tc.length?`<div class="t"><table><tr><th>الأستاذ</th><th>المادة</th><th>الأقسام</th><th>حصص/أسبوع</th><th></th></tr>${D.tc.map(x=>`<tr><td>${esc(x.n)}</td><td>${esc(x.m)}</td><td><details><summary>${(x.cl||[]).length} قسم</summary>${D.cls.map((k,i)=>`<label style="display:block"><input type="checkbox" ${(x.cl||[]).includes(k)?'checked':''} onchange="tcCls('${x.id}',${i},this)"> ${esc(k)}</label>`).join('')}</details></td><td>${tSlots(x.id).length}</td><td><button onclick="renTc('${x.id}')">✎</button> <button onclick="delTc('${x.id}')">✕</button></td></tr>`).join('')}</table></div>`:'<p>لا يوجد أساتذة بعد.</p>'}</div>`}
+function tvTView(){
+  if(!D.tc.length)return'<div class="card"><p>أضف الأساتذة أولاً من تبويب «الأساتذة».</p></div>';
+  const tid=tById(S.ttid)?S.ttid:D.tc[0].id,t=tById(tid),sl=tSlots(tid),days=[...new Set([0,1,2,3,4,...sl.map(x=>x.wd)])].sort((a,b)=>a-b);
+  const cellT=(wd,h)=>sl.filter(x=>x.wd===wd&&x.h===h).map(x=>`<div class="ch ${x.e.type==='grp'?'g':x.e.type==='comb'?'m':''}"><b>${esc(x.c)}</b>${x.e.type==='grp'?`<small>فوج: ${esc(x.e.grp)}</small>`:''}<small>${esc(x.e.subj)}</small></div>`).join('');
+  return`<div class="card np"><div class="r">الأستاذ: <select onchange="S.ttid=this.value;R()">${D.tc.map(x=>`<option value="${esc(x.id)}" ${x.id==tid?'selected':''}>${esc(x.n)} — ${esc(x.m)}</option>`).join('')}</select><button onclick="printPage()">🖨 طباعة</button></div></div>
+  <div class="card"><b>جدول الأستاذ: ${esc(t.n)} (${esc(t.m)}) — ${sl.length} حصة أسبوعيًا</b><div class="t"><table class="tt"><tr><th></th>${days.map(d=>`<th>${DAYS[d]}</th>`).join('')}</tr>${HR.map(h=>`<tr><th>${h}</th>${days.map(d=>`<td>${cellT(d,h)}</td>`).join('')}</tr>`).join('')}</table></div></div>`}
+function tvAbs(){
+  const tops=D.tc.map(x=>`<option value="${esc(x.id)}">${esc(x.n)} — ${esc(x.m)}</option>`).join('');
+  const list=D.ta.slice().sort((x,y)=>(y.a||'').localeCompare(x.a||''));
+  return`<div class="card np"><b>تسجيل غياب أستاذ</b>
+  ${D.tc.length?`<div class="g"><div><label>الأستاذ</label><select id="ta_t" style="width:100%">${tops}</select></div><div><label>من</label><input type="date" id="ta_a" value="${S.date}" style="width:100%"></div><div><label>إلى (اختياري)</label><input type="date" id="ta_b" style="width:100%"></div><div><label>السبب</label><select id="ta_r" style="width:100%">${REAS.map(r=>`<option>${esc(r)}</option>`).join('')}</select></div></div>
+  <div class="r"><span>الساعات:</span> <small>(بدون تحديد = اليوم كاملًا)</small>${HR.map(h=>`<label style="display:inline-flex;gap:3px;align-items:center;margin:0"><input type="checkbox" id="ta_h${h}">${h}</label>`).join('')}</div>
+  <div class="r"><input id="ta_n" placeholder="ملاحظة (اختياري)" style="flex:1;min-width:180px"><button class="p" onclick="addTA()">+ تسجيل الغياب</button></div>`:'<p>أضف الأساتذة أولاً من تبويب «الأساتذة».</p>'}
+  <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" ${D.set.exl===false?'':'checked'} onchange="D.set.exl=this.checked;save();R()"> استبعاد الحصص الضائعة من حساب غيابات التلاميذ</label></div>
+  <div class="card"><b>سجل غيابات الأساتذة</b>${list.length?`<div class="t"><table style="min-width:440px"><tr><th>الأستاذ</th><th>الفترة</th><th>السبب</th><th>الساعات</th><th>ضائعة</th><th></th></tr>${list.map(a=>{const t=tById(a.tid);return`<tr><td>${esc(t?t.n:'(محذوف)')}</td><td>${esc(a.a)}${a.b&&a.b!==a.a?' ← '+esc(a.b):''}</td><td>${esc(a.reason)}${a.n?'<br><small>'+esc(a.n)+'</small>':''}</td><td>${a.hrs&&a.hrs.length?a.hrs.join('، '):'اليوم كاملًا'}</td><td><b>${absHours(a)}</b></td><td><button onclick="delTA('${a.id}')">✕</button></td></tr>`}).join('')}</table></div>`:'<p>لا توجد غيابات مسجلة.</p>'}</div>`}
+function v2(){
+  const tv=S.tv||'grid',T=[['grid','جدول القسم'],['teachers','الأساتذة'],['tview','جدول أستاذ'],['abs','غياب الأساتذة']];
+  const F={grid:tvGrid,teachers:tvTeachers,tview:tvTView,abs:tvAbs};
+  $('#m').innerHTML=`<div class="card np"><div class="tabs" style="margin:0">${T.map(([k,l])=>`<button class="${tv==k?'on':''}" onclick="S.tv='${k}';R()">${l}</button>`).join('')}</div></div>`+(F[tv]||tvGrid)();
+}
 
 // ----------------- التسجيل اليومي -----------------
-function heldForStudent(c, grpName, d){if(isHol(d))return[];const wd=dt(d).getDay();const slots=(D.tt[c]||{})[wd]||[];let hh=[];slots.forEach(h=>{const cell=(D.tt[c]||{})[wd+'_'+h]||[];if(cell.length===0){hh.push(h);return;}let found=false;for(let opt of cell){if(opt.type==='all'){found=true;break}if(opt.type==='grp'&&opt.grp===grpName){found=true;break}}if(found)hh.push(h);});return hh;}
-function sched(c,s){if(isHol(s))return[];const wd=dt(s).getDay();return(D.tt[c]||{})[wd]||[];}
-function L_D(d,c,grp){let res={};const wd=dt(d).getDay();const slots=(D.tt[c]||{})[wd]||[];slots.forEach(h=>{const cell=(D.tt[c]||{})[wd+'_'+h]||[];if(cell.length===0)return;let subj='';for(let opt of cell){if(!grp){if(opt.type==='all')subj=opt.subj;}else if(opt.type==='grp'&&opt.grp===grp)subj=opt.subj;}if(subj){const crKey=c+'|'+h;const reason=(D.cr[d]||{})[crKey]?.t||'';if(reason){res[h]={subj,reason};}}});return res;}
-function ab(id,h){const d=S.date;D.ab[d]=D.ab[d]||{};let a=D.ab[d][id]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];if(a.length)D.ab[d][id]=a;else delete D.ab[d][id];EXC=null;DV++;localStorage.setItem('abs3',JSON.stringify(D));push();const btn=event.target;if(btn&&btn.tagName==='BUTTON'){btn.className=`h ${a.includes(h)?'a':''}`;}}
+function ab(id,h){const d=S.date;D.ab[d]=D.ab[d]||{};let a=D.ab[d][id]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];if(a.length)D.ab[d][id]=a;else delete D.ab[d][id];EXC=null;DV++;localStorage.setItem('abs3',JSON.stringify(D));push();const btn=(typeof event!=='undefined'&&event)?event.target:null;if(btn&&btn.tagName==='BUTTON'){btn.className='h '+(a.includes(h)?'a':'')}}
 function abAll(id,v){const d=S.date,c=S.cls;const s=D.st.find(x=>x.id==id);if(!s)return;D.ab[d]=D.ab[d]||{};if(v){const sHours=heldForStudent(c,s.grp,d);D.ab[d][id]=[...sHours];}else{delete D.ab[d][id];}save();R();}
 function ltSet(id,d=S.date){D.lt[d]=D.lt[d]||{};if(D.lt[d][id])delete D.lt[d][id];else D.lt[d][id]=1;save();R()}
 function juCell(id,d,has,j){if(!has)return'';const e=exOf(d,id);if(e)return`<b style="color:var(--ac)">مبرر — ${EXL[e.t]} (${e.a} → ${e.b})</b>`;return`<select onchange="juSet('${id}','j',this.value)"><option value="">غير مبرر</option><option value="1" ${j.j?'selected':''}>مبرر</option></select>${j.j?`<input placeholder="السبب" value="${esc(j.r)}" onchange="juSet('${id}','r',this.value)" style="width:120px;margin:2px"><input placeholder="رقم الشهادة" value="${esc(j.c)}" onchange="juSet('${id}','c',this.value)" style="width:110px;margin:2px">`:''}`}
-function crSet(h,k,v){const c=S.cls,d=S.date;D.cr[d]=D.cr[d]||{};const key=c+'|'+h;D.cr[d][key]={...(D.cr[d][key]||{}),[k]:v};save();R()}
-function cx(h){const c=S.cls,d=S.date,e=(lostMap()[c+'|'+d]||{})[h];if(e&&!e.manual){alert('هذه الساعة ضائعة تلقائيًا بسبب تسجيل غياب الأستاذ ('+e.reason+'). لتعديلها عدّل سجل الغياب في تبويب استعمال الزمن، أو سجّل «تقديم حصة».');return}D.cx[d]=D.cx[d]||{};let a=D.cx[d][c]||[];if(a.includes(h)){a=a.filter(x=>x!=h);if(D.cr[d])delete D.cr[d][c+'|'+h]}else a=[...a,h];D.cx[d][c]=a;save();R()}
+function crSet(h,k,v){const c=S.cls,d=S.date;D.cr[d]=D.cr[d]||{};const key=c+'|'+h;const o={...(D.cr[d][key]||{}),[k]:v};if(!o.t)delete D.cr[d][key];else D.cr[d][key]=o;if(!Object.keys(D.cr[d]).length)delete D.cr[d];save();R()}
 function juSet(id,k,v,d=S.date){D.ju[d]=D.ju[d]||{};if(k=='j'){if(v)D.ju[d][id]={...(D.ju[d][id]||{}),j:1};else delete D.ju[d][id];save();R();return}const o=D.ju[d][id];if(o){o[k]=v;save()}}
-function v3(){const c=S.cls,d=S.date;const grps=D.grp[c]||[];let activeGrp=S.activeGrp||'';if(activeGrp&&!grps.some(g=>g.name===activeGrp))activeGrp='';const students=act().filter(s=>s.c==c&&(!activeGrp||s.grp===activeGrp));const dw=dt(d).getDay();let hh=[];if(activeGrp){hh=heldForStudent(c,activeGrp,d);}else{const slots=sched(c,d);slots.forEach(h=>{hh.push(h);});}const lost=L_D(d,c,activeGrp);$('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(false)} <input type="date" value="${d}" onchange="S.date=this.value;R()"> ${DAYS[dw]} ${isHol(d)?'<b>(عطلة)</b>':''}</div><div class="r" style="margin-top:10px"><b>عرض الأفواج:</b> <button class="${!activeGrp?'p':''}" onclick="S.activeGrp='';R()">كل القسم</button>${grps.map(g=>`<button class="${activeGrp===g.name?'p':''}" onclick="S.activeGrp='${esc(g.name)}';R()">${esc(g.name)}</button>`).join('')}</div><div style="margin-top:10px;color:var(--muted)">الساعات المطلوبة: ${hh.length} — الساعات الضائعة: ${Object.keys(lost).length}</div></div><div class="card t"><table><tr><th>#</th><th>التلميذ</th><th>الفوج</th><th>الساعات الغائب فيها</th><th>تأخر</th><th></th></tr>${students.map((s,i)=>{const a=(D.ab[d]||{})[s.id]||[];const has=a.some(h=>hh.includes(h));const sHours=heldForStudent(c,s.grp,d);const j=(D.ju[d]||{})[s.id]||{};return`<tr><td>${i+1}</td><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.grp||'-')}</td><td>${sHours.map(h=>`<button class="h ${a.includes(h)?'a':''}" onclick="ab('${s.id}',${h})">${h}</button>`).join('')||'—'}</td><td><button class="h ${isLate(d,s.id)?'l':''}" onclick="ltSet('${s.id}')">ت</button></td><td><button onclick="abAll('${s.id}',1)">كلي</button> <button onclick="abAll('${s.id}',0)">عودة</button></td></tr>`}).join('')}</table></div>`}
+function hourInfo(c,d,h){const cell=cellOf(c,dt(d).getDay(),h);if(!cell.length)return{subj:'—',t:''};const s=[...new Set(cell.map(e=>(e.type==='grp'?'['+e.grp+'] ':'')+e.subj))].join(' / ');const t=[...new Set(cell.map(e=>{const x=tById(tidOf(c,e));return x?x.n:''}).filter(Boolean))].join('، ');return{subj:s,t}}
+function v3(){
+  const c=S.cls,d=S.date;
+  if(!c){$('#m').innerHTML='<div class="card"><p>أنشئ قسمًا أولاً من تبويب «الأقسام والتلاميذ».</p></div>';return}
+  const grps=D.grp[c]||[];let activeGrp=S.activeGrp||'';if(activeGrp&&!grps.some(g=>g.name===activeGrp))activeGrp='';
+  const students=act().filter(s=>s.c==c&&(!activeGrp||s.grp===activeGrp));
+  const dw=dt(d).getDay(),slots=sched(c,d),lost=activeGrp?L_D(d,c,activeGrp):lostAny(d,c);
+  const dayRows=slots.map(h=>{const L=lost[h],i=hourInfo(c,d,h),cr=(D.cr[d]||{})[c+'|'+h]||{};
+    const st=L&&L.auto?`<span class="badge red" title="بسبب غياب الأستاذ">ضائعة — ${esc(L.reason)}</span>`:`<select onchange="crSet(${h},'t',this.value)"><option value="">حصة عادية</option>${cr.t&&!REAS.includes(cr.t)?`<option selected>${esc(cr.t)}</option>`:''}${REAS.map(r=>`<option ${cr.t===r?'selected':''}>${esc(r)}</option>`).join('')}</select>`;
+    return`<tr><td>${h}</td><td style="text-align:start">${esc(i.subj)}</td><td>${esc(i.t||'—')}</td><td>${st}</td></tr>`}).join('');
+  const sRows=students.map((s,i)=>{const a=(D.ab[d]||{})[s.id]||[],pl=plannedForStudent(c,s.grp,d),he=heldForStudent(c,s.grp,d);
+    return`<tr><td>${i+1}</td><td style="text-align:start">${esc(s.n)}</td><td>${esc(s.grp||'-')}</td><td>${pl.map(h=>he.includes(h)?`<button class="h ${a.includes(h)?'a':''}" onclick="ab('${s.id}',${h})">${h}</button>`:`<button class="h x" title="حصة ضائعة">${h}</button>`).join('')||'—'}</td><td><button class="h ${isLate(d,s.id)?'l':''}" onclick="ltSet('${s.id}')">ت</button></td><td><button onclick="abAll('${s.id}',1)">كلي</button> <button onclick="abAll('${s.id}',0)">عودة</button></td></tr>`}).join('');
+  $('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(false)} <input type="date" value="${d}" onchange="S.date=this.value;R()"> ${DAYS[dw]} ${isHol(d)?'<b>(عطلة)</b>':''}</div><div class="r" style="margin-top:10px"><b>عرض الأفواج:</b> <button class="${!activeGrp?'p':''}" onclick="S.activeGrp='';R()">كل القسم</button>${grps.map(g=>`<button class="${activeGrp===g.name?'p':''}" onclick="S.activeGrp=${esc(JSON.stringify(g.name))};R()">${esc(g.name)}</button>`).join('')}</div><div class="r" style="color:var(--muted)">الساعات المبرمجة: ${slots.length} — الساعات الضائعة: ${Object.keys(lost).length} <button onclick="S.tv='abs';tab=3;R()">تسجيل غياب أستاذ</button></div></div>${slots.length?`<div class="card"><b>حصص اليوم</b><div class="t"><table style="min-width:330px"><tr><th>الساعة</th><th>المادة</th><th>الأستاذ</th><th>الحالة</th></tr>${dayRows}</table></div></div>`:`<div class="card"><p>${isHol(d)?'هذا اليوم عطلة.':'لا توجد حصص مبرمجة في هذا اليوم لهذا القسم (راجع تبويب «استعمال الزمن»).'}</p></div>`}<div class="card t"><table><tr><th>#</th><th>التلميذ</th><th>الفوج</th><th>الساعات الغائب فيها</th><th>تأخر</th><th></th></tr>${sRows||'<tr><td colspan="6">لا يوجد تلاميذ في هذا القسم</td></tr>'}</table></div>`}
                 // ---- التقارير والإحصاءات (محدثة لدعم الأفواج)
 function lostRows(ds,cl){
     const r=[];
     ds.forEach(d=>{
+        if(isHol(d))return;
         cl.forEach(c=>{
-            const grps=D.grp[c]||[];
-            // إذا كان القسم به أفواج، نمر على كل فوج، وإلا نمر على القسم كاملاً
-            const targets=grps.length?grps.map(g=>g.name):[null];
-            targets.forEach(grp=>{
-                const lost=L_D(d,c,grp);
-                for(const h in lost){
-                    r.push({d,c,h:+h,subj:lost[h].subj,reason:lost[h].reason,grp:grp||''});
-                }
+            const grps=D.grp[c]||[],seen=new Set();
+            (grps.length?grps.map(g=>g.name):[null]).forEach(grp=>{
+                const L=L_D(d,c,grp);
+                for(const h in L){const x=L[h],isG=x.type==='grp';if(!isG){if(seen.has(h))continue;seen.add(h)}r.push({d,c,h:+h,subj:x.subj,reason:x.reason,grp:isG?grp:'',tid:x.tid||''})}
             });
         });
     });
@@ -241,22 +394,7 @@ function tAbs(ds,cl){const r={};lostRows(ds,cl).forEach(e=>{const k=tName(e);r[k
 
 function lostRep(ds,cl){
  const rows=lostRows(ds,cl),cs={},sj={},NS='غير محددة';
- ds.forEach(d=>cl.forEach(c=>{
-     const grps=D.grp[c]||[];
-     const targets=grps.length?grps.map(g=>g.name):[null];
-     targets.forEach(grp=>{
-         const hh=heldForStudent(c,grp,d);
-         hh.forEach(h=>{
-             let s='';
-             const cell=(D.tt[c]||{})[dt(d).getDay()+'_'+h]||[];
-             for(let opt of cell){ if((!grp&&opt.type==='all')||(opt.type==='grp'&&opt.grp===grp)) s=opt.subj; }
-             if(!s) s=NS;
-             const k=(grp?grp+'-':'')+c+'\u0001'+s;
-             (cs[k]=cs[k]||{c:grp?grp+' - '+c:c,s,sch:0,lost:0}).sch++;
-             (sj[s]=sj[s]||{s,sch:0,lost:0}).sch++;
-         });
-     });
- }));
+ ds.forEach(d=>{if(isHol(d))return;cl.forEach(c=>{const wd=dt(d).getDay();slotsOf(c,wd).forEach(h=>{const cell=cellOf(c,wd,h),add=(grp,s0)=>{const s1=s0||NS,k=(grp?grp+'-':'')+c+'\u0001'+s1;(cs[k]=cs[k]||{c:grp?grp+' - '+c:c,s:s1,sch:0,lost:0}).sch++;(sj[s1]=sj[s1]||{s:s1,sch:0,lost:0}).sch++};if(!cell.length){add('','');return}let done=false;cell.forEach(e=>{if(e.type==='grp')add(e.grp,e.subj);else if(!done){done=true;add('',e.subj)}})})})});
  rows.forEach(e=>{
      const s=e.subj||NS,k=(e.grp?e.grp+'-':'')+e.c+'\u0001'+s;
      (cs[k]=cs[k]||{c:e.grp?e.grp+' - '+e.c:e.c,s,sch:0,lost:0}).lost++;
@@ -274,13 +412,7 @@ function lostHtml(L){
 
 function repData(){
  const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls;
- const cRows=cl.map(c=>{
-     const grps=D.grp[c]||[];
-     const targets=grps.length?grps.map(g=>g.name):[null];
-     let sch=0,hl=0;
-     targets.forEach(grp=>{ sch+=schedN(c,ds,grp); hl+=heldN(c,ds,grp); });
-     return[c,sch,hl,sch-hl];
- });
+ const cRows=[];cl.forEach(c=>{const grps=D.grp[c]||[];const targets=grps.length?grps.map(g=>g.name):[null];targets.forEach(grp=>{const sch=schedN(c,ds,grp),hl=heldN(c,ds,grp);cRows.push([grp?c+' — '+grp:c,sch,hl,sch-hl])})});
  
  const sRows=act().filter(s=>cl.includes(s.c)).map(s=>[s,absSplit(s.id,s.c,ds,s.grp)]).filter(x=>x[1].t>0||x[1].l>0).sort((x,y)=>y[1].t-x[1].t);
  return{a,b,ds,cl,cRows,sRows,tRows:tAbs(ds,cl),L:lostRep(ds,cl)}
@@ -288,7 +420,7 @@ function repData(){
 function v4(){
  const{a,b,cRows,sRows,tRows}=repData();
  $('#m').innerHTML=`<div class="card np"><div class="r">${perBar(true)}<button class="p" onclick="printPage()">طباعة</button><button onclick="expRep()">تصدير Excel</button></div></div>
- <div class="card"><b>من ${a} إلى ${b}</b><h4>الساعات المدرَّسة لكل قسم/فوج</h4><div class="t"><table><tr><th>القسم</th><th>مبرمجة</th><th>فعلية</th><th>الفرق</th></tr>${cRows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table></div>
+ <div class="card"><b>من ${a} إلى ${b}</b><h4>الساعات المدرَّسة لكل قسم/فوج</h4><div class="t"><table><tr><th>القسم / الفوج</th><th>مبرمجة</th><th>فعلية (بعد الضائع)</th><th>حصص ضائعة</th></tr>${cRows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table></div>
  <h4>غيابات التلاميذ (بالساعات)</h4><div class="t"><table><tr><th>التلميذ</th><th>القسم/الفوج</th><th>مجموع الغياب</th><th>مبرر</th><th>غير مبرر</th><th>تأخرات</th></tr>${sRows.map(([s,x])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.grp? s.grp+' - '+s.c : s.c)}</td><td><b>${x.t}</b></td><td>${x.j}</td><td>${x.u}</td><td>${x.l}</td></tr>`).join('')||'<tr><td colspan=6>لا غيابات</td></tr>'}</table></div>
  ${lostHtml(repData().L)}</div>`}
 function expRep(){const{a,b,cRows,sRows,L}=repData();exportSheets(`تقرير_${a}_${b}`,[{n:'الأقسام',rows:[['القسم','مبرمجة','فعلية','الفرق'],...cRows]},{n:'التلاميذ',rows:[['التلميذ','القسم/الفوج','مجموع الغياب','مبرر','غير مبرر','تأخرات'],...sRows.map(([s,x])=>[s.n,s.grp?s.grp+' - '+s.c:s.c,x.t,x.j,x.u,x.l])]},{n:'ضائع قسم-مادة',rows:[['القسم/الفوج','المادة','مبرمجة','ضائعة','النسبة'],...L.byCS.map(x=>[x.c,x.s,x.sch,x.lost,pc(x.lost,x.sch)])]},{n:'ضائع حسب المادة',rows:[['المادة','مبرمجة','ضائعة','النسبة'],...L.bySubj.map(x=>[x.s,x.sch,x.lost,pc(x.lost,x.sch)])]},{n:'الأساتذة',rows:[['الأستاذ','المادة','أيام الغياب','الحصص الضائعة','حسب الأقسام','الأسباب'],...L.byT.map(o=>[o.name,o.subj,o.days.size,o.n,clTxt(o.cl),clTxt(o.rs)])]},{n:'تفصيل الحصص',rows:[['التاريخ','القسم','الفوج','الساعة','المادة','السبب'],...L.rows.map(e=>[e.d,e.c,e.grp,e.h,e.subj,e.reason])]}])}
@@ -297,7 +429,7 @@ function vH(){
  const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls,A=act().filter(s=>cl.includes(s.c)),sm={};A.forEach(s=>sm[s.id]=s);
  let T=0,J=0,Lt=0;const wd=[0,0,0,0,0,0,0],per={},cr={};
  ds.forEach(d=>{const ab=D.ab[d]||{};for(const id in ab){const s=sm[id];if(!s)continue;const hh=heldForStudent(s.c,s.grp,d),k=ab[id].filter(h=>hh.includes(h)).length;if(!k)continue;T+=k;if(jus(d,id))J+=k;wd[dt(d).getDay()]+=k;per[id]=(per[id]||0)+k;cr[s.c]=(cr[s.c]||0)+k}const lt=D.lt[d]||{};for(const id in lt){const s=sm[id];if(s&&heldForStudent(s.c,s.grp,d).length)Lt++}});
- let pos=0;const crow=cl.map(c=>{const n=A.filter(s=>s.c==c).length;const grps=D.grp[c]||[];const targets=grps.length?grps.map(g=>g.name):[null];let H=0;targets.forEach(g=>H+=heldN(c,ds,g));const tot=n*H;pos+=tot;const ab=cr[c]||0;return{c,n,H,ab,p:tot?ab/tot*100:0}}).sort((x,y)=>y.p-x.p);
+ let pos=0;const crow=cl.map(c=>{const n=A.filter(s=>s.c==c).length;const grps=D.grp[c]||[];const targets=grps.length?grps.map(g=>g.name):[null];let H=heldN(c,ds,null),tot=0;A.filter(s=>s.c==c).forEach(s=>{tot+=heldN(c,ds,s.grp)});pos+=tot;const ab=cr[c]||0;return{c,n,H,ab,p:tot?ab/tot*100:0}}).sort((x,y)=>y.p-x.p);
  const rate=pos?((pos-T)/pos*100).toFixed(1):'—';
  const nn=[0,0,0,0,0];A.forEach(s=>nn[stat(s,ds).lv]++);
  const top=Object.entries(per).sort((x,y)=>y[1]-x[1]).slice(0,10),wmax=Math.max(1,...wd),ta=tAbs(ds,cl);
@@ -441,6 +573,7 @@ async function boot(){
   initServer();
 }
 window.addEventListener('error',e=>{if(!document.querySelector('#m').innerHTML.trim())renderFatal('خطأ: '+e.message)});
+window.addEventListener('unhandledrejection',e=>{console.warn('unhandled',e.reason);if(!document.querySelector('#m').innerHTML.trim())renderFatal('خطأ: '+(e.reason&&e.reason.message||e.reason))});
 boot();
 
 // ---- نافذة «اتصل بنا»
