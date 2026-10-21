@@ -91,7 +91,7 @@ const DZL=[...new Set(DZ.flatMap(w=>[w[1],...w[2]]))];
 let EXC=null,DV=0,RC={};
 const def={set:{year:'2026/2027',school:'',wilaya:'',baladiya:'',sg:'',dir:'',nad:'',mc:''},terms:[{n:'الفصل 1',a:'',b:''},{n:'الفصل 2',a:'',b:''},{n:'الفصل 3',a:'',b:''}],hol:[],cls:[],st:[],tt:{},cx:{},ab:{},ju:{},lt:{},tp:{},tc:[],nl:[],cdTh:[3,7,15,30],cdWk:true,lr:3,ex:[]};
 const mk=()=>JSON.parse(JSON.stringify(def));
-function norm(){D.th=D.th||[6,12,18];if(!D.v2){D.cdTh=[3,7,15,30];D.v2=1}D.cdTh=D.cdTh||[3,7,15,30];while(D.cdTh.length<4)D.cdTh.push(0);EXC=null;DV++;if(D.cdWk===undefined)D.cdWk=true;D.lr=D.lr||3;D.set=D.set||{};if(D.set.sg===undefined)D.set.sg='';D.terms=D.terms||mk().terms;['ab','ju','lt','tp','cx','tt','ts','cr','cs'].forEach(k=>D[k]=D[k]||{});['nl','tc','st','cls','hol','ex','ta','pv','sx'].forEach(k=>D[k]=D[k]||[]);
+function norm(){D.grp=D.grp||{};D.th=D.th||[6,12,18];if(!D.v2){D.cdTh=[3,7,15,30];D.v2=1}D.cdTh=D.cdTh||[3,7,15,30];while(D.cdTh.length<4)D.cdTh.push(0);EXC=null;DV++;if(D.cdWk===undefined)D.cdWk=true;D.lr=D.lr||3;D.set=D.set||{};if(D.set.sg===undefined)D.set.sg='';D.terms=D.terms||mk().terms;['ab','ju','lt','tp','cx','tt','ts','cr','cs'].forEach(k=>D[k]=D[k]||{});['nl','tc','st','cls','hol','ex','ta','pv','sx'].forEach(k=>D[k]=D[k]||[]);
     D.cls.forEach(c=>{if(typeof D.cs[c]==='undefined')D.cs[c]=[];if(!D.grp)D.grp={};if(!D.grp[c])D.grp[c]=[];});
     D.tc.forEach(x=>{x.cl=x.cl||[]});
     if(!D.v4){D.v4=1;for(const c in D.tt){for(const wd in D.tt[c]){D.tt[c][wd].forEach(h=>{const key=wd+'_'+h;if(D.ts[c]&&D.ts[c][key]){if(!D.tt[c][key])D.tt[c][key]=[];if(!D.tt[c][key].some(x=>x.type==='all')){D.tt[c][key].push({type:'all',subj:D.ts[c][key],grp:null});}}});}}}
