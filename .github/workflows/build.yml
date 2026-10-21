@@ -1,15 +1,19 @@
 name: Build Ghiyabat APK and EXE
 on:
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   windows-exe:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: 
+          node-version: 20
+          cache: 'npm'
       - name: Prepare desktop project
         run: node tools/prepare-desktop.js
       - name: Install desktop dependencies
@@ -23,14 +27,19 @@ jobs:
           name: ghiyabat-windows
           path: desktop/dist/*.exe
           if-no-files-found: error
+
   android-apk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: 
+          node-version: 20
+          cache: 'npm'
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
+        with: 
+          distribution: temurin
+          java-version: 17
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
@@ -52,7 +61,8 @@ jobs:
         run: |
           node tools/prepare-android.js post
           npx cap sync android
-          chmod +x android/gradlew
+      - name: Fix gradlew permissions
+        run: chmod +x android/gradlew
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
@@ -63,6 +73,7 @@ jobs:
           name: ghiyabat-android
           path: Ghiyabat.apk
           if-no-files-found: error
+
   release:
     needs: [windows-exe, android-apk]
     runs-on: ubuntu-latest
