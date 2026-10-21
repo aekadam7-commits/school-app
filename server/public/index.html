@@ -95,6 +95,7 @@ function norm(){D.th=D.th||[6,12,18];if(!D.v2){D.cdTh=[3,7,15,30];D.v2=1}D.cdTh=
     D.cls.forEach(c=>{if(typeof D.cs[c]==='undefined')D.cs[c]=[];if(!D.grp)D.grp={};if(!D.grp[c])D.grp[c]=[];});
     D.tc.forEach(x=>{x.cl=x.cl||[]});
     if(!D.v4){D.v4=1;for(const c in D.tt){for(const wd in D.tt[c]){D.tt[c][wd].forEach(h=>{const key=wd+'_'+h;if(D.ts[c]&&D.ts[c][key]){if(!D.tt[c][key])D.tt[c][key]=[];if(!D.tt[c][key].some(x=>x.type==='all')){D.tt[c][key].push({type:'all',subj:D.ts[c][key],grp:null});}}});}}}
+}
 let D;try{D=Object.assign(mk(),JSON.parse(localStorage.getItem('abs3'))||{})}catch(e){D=mk()}
 norm();
 let token=localStorage.getItem('gh_token')||'', user=null, tmr=null, pollTimer=null, syncing=false, msg='غير متصل بالسيرفر';
