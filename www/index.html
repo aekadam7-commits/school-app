@@ -272,7 +272,33 @@ norm();
 let token=localStorage.getItem('gh_token')||'', user=null, tmr=null, pollTimer=null, syncing=false, msg='غير متصل بالسيرفر';
 const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const base=native?'http://127.0.0.1:8787':'';const r=await fetch(base+url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
 const save=()=>{EXC=null;DV++;localStorage.setItem('abs3',JSON.stringify(D));push()};
-function push(){if(!token)return;clearTimeout(tmr);tmr=setTimeout(async()=>{try{const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt;msg='تم الحفظ على السيرفر '+new Date().toLocaleTimeString();setStatus()}catch(e){msg='تعذر الحفظ على السيرفر: '+e.message;setStatus()}},500)}
+
+// ---- حفظ محسن لا يضيع البيانات
+let isSyncing = false;
+let pendingSave = false;
+function push(){
+    if(!token) return;
+    if(isSyncing){ pendingSave = true; return; }
+    clearTimeout(tmr);
+    tmr = setTimeout(async () => {
+        isSyncing = true;
+        pendingSave = false;
+        try {
+            const x = await api('/api/state', { method: 'PUT', body: JSON.stringify({ state: D }) });
+            window._lastServerUpdate = x.updatedAt;
+            msg = 'تم الحفظ على السيرفر ' + new Date().toLocaleTimeString();
+            setStatus();
+        } catch (e) {
+            msg = 'تعذر الحفظ، سيتم المحاولة لاحقاً: ' + e.message;
+            setStatus();
+            pendingSave = true;
+        } finally {
+            isSyncing = false;
+            if (pendingSave) push();
+        }
+    }, 500);
+}
+
 function setStatus(){const e=document.getElementById('sy');if(e)e.textContent=msg}
 async function pull(){const r=await api('/api/state');if(r.state&&r.state.data){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));window._lastServerUpdate=r.updatedAt;msg='تم تحميل البيانات من السيرفر'}else{msg='لا توجد بيانات على السيرفر؛ تم رفع بيانات هذا الجهاز';const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt}R();setStatus()}
 async function login(){try{const username=$('#loginUser').value.trim(),password=$('#loginPass').value;const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});token=r.token;user=r.user;localStorage.setItem('gh_token',token);await pull();startPolling()}catch(e){alert(e.message)}}
@@ -327,14 +353,38 @@ function runOf(c,list,asOf){let len=0,start='',prev='';
  if(!prev)return{len:0,start:''};
  for(let x=addD(prev,1);x<=asOf;x=addD(x,1))if(held(c,x).length)return{len:0,start:''};
  return{len,start}}
+
+// ---- كاش محسن
 function runsAll(asOf){
- const key=DV+'|'+asOf;if(RC.key==key)return RC.map;
- const sm={};D.st.forEach(s=>{if(!s.x)sm[s.id]=s});
- const L={};
- Object.keys(D.ab).sort().forEach(d=>{if(d>asOf)return;const m=D.ab[d];for(const id in m){const s=sm[id];if(!s)continue;const hh=held(s.c,d);if(m[id].some(h=>hh.includes(h))&&!jus(d,id))(L[id]=L[id]||[]).push(d)}});
- const res={};
- for(const id in L){const s=sm[id],pe=lastReset(s,asOf);res[id]=runOf(s.c,pe?L[id].filter(d=>d>pe):L[id],asOf)}
- RC={key,map:res};return res}
+    const key = DV + '|' + asOf;
+    if (RC.key === key && RC.map) return RC.map;
+    
+    const sm = {};
+    D.st.forEach(s => { if (!s.x) sm[s.id] = s; });
+    
+    const L = {};
+    Object.keys(D.ab).sort().forEach(d => {
+        if (d > asOf) return;
+        const m = D.ab[d];
+        for (const id in m) {
+            const s = sm[id];
+            if (!s) continue;
+            const hh = held(s.c, d);
+            if (m[id].some(h => hh.includes(h)) && !jus(d, id)) {
+                (L[id] = L[id] || []).push(d);
+            }
+        }
+    });
+    
+    const res = {};
+    for (const id in L) {
+        const s = sm[id], pe = lastReset(s, asOf);
+        res[id] = runOf(s.c, pe ? L[id].filter(d => d > pe) : L[id], asOf);
+    }
+    
+    RC = { key, map: res };
+    return res;
+}
 const lvD=n=>{for(let i=3;i>=0;i--)if(D.cdTh[i]>0&&n>=D.cdTh[i])return i+1;return 0};
 function stat(s,ds){const x=absSplit(s.id,s.c,ds||[]),r=runsAll(asOfDate())[s.id]||{len:0,start:''};return{...x,streak:r.len,start:r.start,h:x.u+x.eq,lv:lvD(r.len)}}
 // حالة التلميذ مع ساعات الغياب منذ بداية التسلسل
@@ -519,7 +569,26 @@ function crSet(h,k,v){const c=S.cls,d=S.date;D.cr[d]=D.cr[d]||{};const key=c+'|'
 function cx(h){const c=S.cls,d=S.date,e=(lostMap()[c+'|'+d]||{})[h];
  if(e&&!e.manual){alert('هذه الساعة ضائعة تلقائيًا بسبب تسجيل غياب الأستاذ ('+e.reason+'). لتعديلها عدّل سجل الغياب في تبويب استعمال الزمن، أو سجّل «تقديم حصة».');return}
  D.cx[d]=D.cx[d]||{};let a=D.cx[d][c]||[];if(a.includes(h)){a=a.filter(x=>x!=h);if(D.cr[d])delete D.cr[d][c+'|'+h]}else a=[...a,h];D.cx[d][c]=a;save();R()}
-function ab(id,h){const d=S.date;D.ab[d]=D.ab[d]||{};let a=D.ab[d][id]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];if(a.length)D.ab[d][id]=a;else delete D.ab[d][id];save();R()}
+
+// ---- دالة تسجيل الغياب المحسنة
+function ab(id, h) {
+    const d = S.date;
+    D.ab[d] = D.ab[d] || {};
+    let a = D.ab[d][id] || [];
+    
+    a = a.includes(h) ? a.filter(x => x != h) : [...a, h];
+    if (a.length) D.ab[d][id] = a; else delete D.ab[d][id];
+    
+    EXC=null;DV++;
+    localStorage.setItem('abs3', JSON.stringify(D));
+    push();
+    
+    const btn = event.target;
+    if (btn && btn.tagName === 'BUTTON') {
+        btn.className = `h ${a.includes(h) ? 'a' : ''}`;
+    }
+}
+
 function abAll(id,v){const d=S.date;D.ab[d]=D.ab[d]||{};if(v)D.ab[d][id]=[...sched(S.cls,d)];else{delete D.ab[d][id];if(D.ju[d])delete D.ju[d][id]}save();R()}
 function ltSet(id,d=S.date){D.lt[d]=D.lt[d]||{};if(D.lt[d][id])delete D.lt[d][id];else D.lt[d][id]=1;save();R()}
 function juSet(id,k,v,d=S.date){D.ju[d]=D.ju[d]||{};if(k=='j'){if(v)D.ju[d][id]={...(D.ju[d][id]||{}),j:1};else delete D.ju[d][id];save();R();return}const o=D.ju[d][id];if(o){o[k]=v;save()}}
@@ -717,7 +786,7 @@ function credPrev(f,l,b){const a=latinN(f),c=latinN(l),y=/^(\d{4})-/.exec(b||'')
 function ulist(){
  if(UER)return`<p style="color:var(--red)">${esc(UER)}</p>`;
  if(!UL.length)return'<p>لا يوجد مشرفون بعد. أضف أول مشرف من النموذج أعلاه.</p>';
- return`<div class="t"><table style="min-width:560px"><tr><th>#</th><th>اللقب والاسم</th><th>تاريخ الميلاد</th><th>اسم المستخدم</th><th>الرقم السري</th><th></th></tr>${UL.map((x,i)=>`<tr><td>${i+1}</td><td style="direction:ltr">${esc(x.last)} ${esc(x.first)}</td><td>${esc(x.birth)}</td><td style="direction:ltr"><b>${esc(x.username)}</b></td><td style="direction:ltr">${x.custom?'<small>غيّرها المشرف</small>':esc(x.password)}</td><td style="white-space:nowrap"><button onclick="uEdit('${esc(x.username)}')">تعديل</button> <button onclick="uDel('${esc(x.username)}')" style="color:var(--red)">حذف</button></td></tr>`).join('')}</table></div>`}
+ return`<div class="t"><table style="min-width:560px"><tr><th>#</th><th>اللقب والاسم</th><th>تاريخ الميلاد</th><th>اسم المستخدم</th><th>الرقم السري</th><th></th></tr>${UL.map((x,i)=>`<tr><td>${i+1}</td><td style="direction:ltr">${esc(x.last)} ${esc(x.first)}</td><td>${esc(x.birth)}</td><td style="direction:ltr"><b>${esc(x.username)}</b></td><td style="direction:ltr">${x.custom?'<small>غيّرها المشرف</small>':'********'}</td><td style="white-space:nowrap"><button onclick="uEdit('${esc(x.username)}')">تعديل</button> <button onclick="uDel('${esc(x.username)}')" style="color:var(--red)">حذف</button></td></tr>`).join('')}</table></div>`}
 function drawU(){
  $('#m').innerHTML=`<div class="card"><b>${UE?'تعديل مشرف تربوي':'إضافة مشرف تربوي'}</b><p>اكتب الاسم واللقب بالفرنسية (حروف لاتينية) مع تاريخ الميلاد؛ يُنشأ اسم المستخدم وكلمة المرور تلقائيًا.</p><div class="g"><div><label>اللقب (بالفرنسية)</label><input id="uln" dir="ltr" autocapitalize="none" autocomplete="off" placeholder="boumaza" style="width:100%" oninput="uPrev()"></div><div><label>الاسم (بالفرنسية)</label><input id="uf" dir="ltr" autocapitalize="none" autocomplete="off" placeholder="mounir" style="width:100%" oninput="uPrev()"></div><div><label>تاريخ الميلاد</label><input id="ub" type="date" style="width:100%" oninput="uPrev()" onchange="uPrev()"></div></div><div id="upv" class="upv"></div><div class="r"><button class="p" onclick="uSave()">${UE?'حفظ التعديل':'+ إضافة المشرف'}</button>${UE?'<button onclick="uCancel()">إلغاء</button>':''}</div></div><div class="card"><b id="ucnt">المشرفون التربويون (${UL.length})</b><div id="ulist">${ulist()}</div><small>يستطيع المشرف تسجيل الدخول باسم المستخدم وكلمة المرور الظاهرين هنا. المسؤول (admin) وحده يضيف المشرفين ويعدّلهم ويحذفهم.</small></div>`;
  uPrev()}
