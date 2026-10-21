@@ -4,60 +4,271 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>تسيير غيابات التلاميذ | الإدارة والتخزين</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-:root{--bg:#f2f5fb;--fg:#17243a;--card:#fff;--ac:#1769aa;--ac2:#0d4e83;--bd:#dce5f0;--red:#c83c4b;--muted:#718198;--soft:#eaf3fb;--shadow:0 8px 24px rgba(24,52,84,.06)}
-@media(prefers-color-scheme:dark){:root{--bg:#111827;--fg:#e7edf6;--card:#1b2636;--ac:#63a8e8;--ac2:#347ebd;--bd:#344357;--red:#ff707b;--muted:#a3b2c5;--soft:#25384c;--shadow:0 8px 24px rgba(0,0,0,.14)}}
-*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.6}
-nav{display:flex;gap:7px;overflow-x:auto;background:linear-gradient(120deg,var(--ac2),var(--ac));padding:12px max(12px,calc((100% - 1180px)/2));position:sticky;top:0;z-index:20;box-shadow:0 5px 18px rgba(13,78,131,.18);scrollbar-width:thin}
-nav button{white-space:nowrap;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;border-radius:9px;padding:9px 13px;font-weight:600;transition:.18s}
-nav button:hover{background:rgba(255,255,255,.13)}nav button.on{background:#fff;color:var(--ac2);border-color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.12)}
-main{padding:22px 14px 40px;max-width:1180px;margin:auto;min-height:calc(100vh - 60px)}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:19px;margin-bottom:16px;box-shadow:var(--shadow);overflow:hidden}
-.card>b{display:block;color:var(--ac);font-size:16px;margin-bottom:10px}.card p{color:var(--muted)}
-button,input,select{font:inherit;padding:9px 11px;border:1px solid var(--bd);border-radius:9px;background:var(--card);color:var(--fg);max-width:100%}
-input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--ac) 25%,transparent);border-color:var(--ac)}
-button{cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s}button:hover{border-color:var(--ac)}button:active{transform:translateY(1px)}button.p,nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}nav button.on{background:#fff;color:var(--ac2);border-color:#fff}button.p{box-shadow:0 3px 9px rgba(23,105,170,.15)}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
-.t{overflow:auto;border:1px solid var(--bd);border-radius:10px;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:540px;background:var(--card)}td,th{border-bottom:1px solid var(--bd);border-left:1px solid var(--bd);padding:9px 8px;text-align:center;font-size:13px}th{background:var(--soft);color:var(--ac2);font-weight:700;white-space:nowrap}tr:last-child td{border-bottom:0}tbody tr:hover,table tr:hover td{background:color-mix(in srgb,var(--soft) 45%,var(--card))}
-.h{display:inline-block;min-width:34px;margin:2px}.h.a{background:var(--red);color:#fff;border-color:var(--red)}.h.x{opacity:.35;pointer-events:none}.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.sig{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:24px;text-align:center}.sig>div{padding:14px;border:1px dashed var(--bd);border-radius:10px}
-#sy{padding:10px 12px;border-radius:9px;background:var(--soft);color:var(--ac2);font-weight:600}
-input[type=checkbox]{accent-color:var(--ac);width:17px;height:17px;vertical-align:middle}input[type=date],input[type=month]{min-width:145px}
-@media(max-width:650px){main{padding:12px 9px 28px}.card{padding:13px;border-radius:12px}nav{padding:9px;gap:5px}nav button{padding:8px 10px;font-size:13px}.g{grid-template-columns:1fr 1fr;gap:8px}.r{gap:6px}button,input,select{padding:8px;font-size:14px}.card>b{font-size:15px}}
-@media(max-width:390px){.g{grid-template-columns:1fr}}
-@media print{nav,.np{display:none!important}body{background:#fff;color:#000;font-size:12px}main{max-width:none;padding:0}.card{border:0;box-shadow:none;padding:4px}.t{overflow:visible;border:0}table{min-width:0}td,th{padding:3px;font-size:10px}}
-.daycell{cursor:pointer;min-width:28px;padding:5px 3px!important;user-select:none}.daycell.absent{background:#f8c8cb!important;color:#9b1522;font-weight:800}.daycell:hover{outline:2px solid var(--ac);outline-offset:-2px}@media(max-width:650px){.daycell{min-width:25px;padding:4px 2px!important;font-size:11px!important}}</style>
+:root{
+  --bg:#eef3fa; --bg2:#e3ebf6;
+  --fg:#152238; --card:#ffffff;
+  --ac:#1b6fb8; --ac2:#0f4d84; --ac3:#2f8fe0;
+  --bd:#d7e2ef; --bd2:#c3d4e6;
+  --red:#c8303f; --red2:#a8222f;
+  --ok:#1e8a4c; --warn:#c47a00;
+  --muted:#6b7c93; --soft:#eaf2fb; --soft2:#f4f8fd;
+  --shadow:0 10px 30px rgba(20,50,85,.08);
+  --shadow2:0 4px 14px rgba(20,50,85,.10);
+  --radius:16px; --radius-sm:10px;
+  --focus:0 0 0 3px rgba(27,111,184,.22);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1722; --bg2:#131e2c;
+    --fg:#e7eef8; --card:#1a2636;
+    --ac:#5aa6e6; --ac2:#3d86c6; --ac3:#7cbcf0;
+    --bd:#2f3f55; --bd2:#3a4c66;
+    --red:#ff6b76; --red2:#e5545f;
+    --ok:#4cc47f; --warn:#f0a93a;
+    --muted:#9fb0c6; --soft:#22344a; --soft2:#1d2c3f;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --shadow2:0 4px 14px rgba(0,0,0,.35);
+    --focus:0 0 0 3px rgba(90,166,230,.28);
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+  color:var(--fg); font-size:15px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ---------- شريط التنقل ---------- */
+nav{
+  display:flex; gap:6px; overflow-x:auto;
+  background:linear-gradient(120deg,var(--ac2),var(--ac) 60%,var(--ac3));
+  padding:12px max(14px,calc((100% - 1200px)/2));
+  position:sticky; top:0; z-index:20;
+  box-shadow:0 6px 22px rgba(15,77,132,.28);
+  scrollbar-width:thin;
+  backdrop-filter:saturate(1.1);
+}
+nav::-webkit-scrollbar{height:6px}
+nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:99px}
+nav button{
+  white-space:nowrap; border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06); color:#fff;
+  border-radius:999px; padding:9px 15px; font-weight:600;
+  font-size:14px; letter-spacing:.2px;
+  transition:all .18s ease;
+  box-shadow:0 2px 0 rgba(0,0,0,.04);
+}
+nav button:hover{background:rgba(255,255,255,.18);transform:translateY(-1px)}
+nav button.on{
+  background:#fff; color:var(--ac2); border-color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  font-weight:800;
+}
+
+/* ---------- الحاوية ---------- */
+main{
+  padding:24px 16px 48px; max-width:1200px; margin:auto;
+  min-height:calc(100vh - 60px);
+}
+
+/* ---------- البطاقات ---------- */
+.card{
+  background:var(--card); border:1px solid var(--bd);
+  border-radius:var(--radius); padding:20px; margin-bottom:16px;
+  box-shadow:var(--shadow); overflow:hidden;
+  position:relative;
+}
+.card::before{
+  content:""; position:absolute; inset:0 auto auto 0;
+  width:100%; height:3px;
+  background:linear-gradient(90deg,var(--ac),var(--ac3),transparent);
+  opacity:.55;
+}
+.card>b{
+  display:block; color:var(--ac2); font-size:16px; font-weight:800;
+  margin-bottom:12px; padding-bottom:8px;
+  border-bottom:1px dashed var(--bd);
+}
+.card p{color:var(--muted);margin:.4em 0}
+.card small{color:var(--muted)}
+
+/* ---------- الحقول والأزرار ---------- */
+button,input,select{
+  font:inherit; padding:9px 12px;
+  border:1px solid var(--bd2); border-radius:var(--radius-sm);
+  background:var(--card); color:var(--fg);
+  max-width:100%; transition:all .16s ease;
+}
+input::placeholder{color:var(--muted);opacity:.8}
+input:hover,select:hover{border-color:var(--ac)}
+input:focus,select:focus{
+  outline:none; border-color:var(--ac); box-shadow:var(--focus);
+}
+button{cursor:pointer;font-weight:600;letter-spacing:.15px}
+button:hover{border-color:var(--ac);box-shadow:var(--shadow2)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+/* الزر الأساسي */
+button.p{
+  background:linear-gradient(180deg,var(--ac),var(--ac2));
+  color:#fff; border-color:var(--ac2);
+  box-shadow:0 4px 12px rgba(27,111,184,.28);
+}
+button.p:hover{filter:brightness(1.06);box-shadow:0 6px 16px rgba(27,111,184,.35)}
+
+/* أزرار صغيرة للأيقونات */
+button.h{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:34px;height:34px;padding:0 8px;margin:2px;
+  border-radius:8px;font-weight:700;font-size:13px;
+}
+button.h.a{background:linear-gradient(180deg,var(--red),var(--red2));color:#fff;border-color:var(--red2)}
+button.h.l{background:linear-gradient(180deg,#f0a93a,#c47a00);color:#fff;border-color:#c47a00}
+button.h.x{opacity:.3;pointer-events:none}
+
+/* ---------- الشبكات ---------- */
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+
+/* ---------- الجداول ---------- */
+.t{overflow:auto;border:1px solid var(--bd);border-radius:12px;margin-top:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:540px;background:var(--card)}
+td,th{
+  border-bottom:1px solid var(--bd);
+  border-left:1px solid var(--bd);
+  padding:9px 9px;text-align:center;font-size:13px;
+}
+th{
+  background:linear-gradient(180deg,var(--soft),var(--soft2));
+  color:var(--ac2);font-weight:800;white-space:nowrap;
+  position:sticky;top:0;z-index:1;
+}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even) td{background:var(--soft2)}
+tbody tr:hover td,table tr:hover td{background:var(--soft)}
+
+/* ---------- التواقيع ---------- */
+.sig{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:26px;text-align:center}
+.sig>div{
+  padding:16px;border:1px dashed var(--bd2);border-radius:12px;
+  background:var(--soft2);font-weight:600;color:var(--ac2);
+}
+
+/* ---------- الحالة والمربعات ---------- */
+#sy{
+  padding:10px 14px;border-radius:10px;
+  background:var(--soft);color:var(--ac2);font-weight:700;
+  border-left:4px solid var(--ac);
+}
+input[type=checkbox]{accent-color:var(--ac);width:17px;height:17px;vertical-align:middle;cursor:pointer}
+input[type=date],input[type=month]{min-width:148px}
+
+/* ---------- خلايا الأيام ---------- */
+.daycell{
+  cursor:pointer;min-width:30px;padding:6px 4px!important;
+  user-select:none;border-radius:6px;font-weight:700;
+  transition:all .12s ease;
+}
+.daycell:hover{outline:2px solid var(--ac);outline-offset:-2px;transform:scale(1.05)}
+.daycell.absent{background:#f8c8cb!important;color:#9b1522}
+.daycell.jus{background:#cfe9d4!important;color:#1b6b34}
+.daycell.late{background:#ffe3ae!important;color:#8a5200}
+
+/* ---------- شريط التقدم والإحصاءات ---------- */
+.bar{height:14px;background:linear-gradient(90deg,var(--ac),var(--ac3));border-radius:99px;transition:width .4s ease}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.k>div{
+  background:linear-gradient(180deg,var(--soft),var(--soft2));
+  border-radius:14px;padding:14px;text-align:center;
+  border:1px solid var(--bd);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.k>div:hover{transform:translateY(-2px);box-shadow:var(--shadow2)}
+.k b{display:block;font-size:22px;color:var(--ac2);font-weight:800}
+.k span{font-size:12px;color:var(--muted);font-weight:600}
+
+/* ---------- الاستجابة ---------- */
+@media(max-width:650px){
+  main{padding:12px 9px 32px}
+  .card{padding:14px;border-radius:12px}
+  nav{padding:9px;gap:5px}
+  nav button{padding:8px 11px;font-size:13px}
+  .g{grid-template-columns:1fr 1fr;gap:8px}
+  .r{gap:6px}
+  button,input,select{padding:8px 10px;font-size:14px}
+  .card>b{font-size:15px}
+  .daycell{min-width:25px;padding:4px 2px!important;font-size:11px!important}
+  .k>div{padding:10px}
+  .k b{font-size:18px}
+}
+@media(max-width:390px){
+  .g{grid-template-columns:1fr}
+  nav button{font-size:12px;padding:7px 9px}
+}
+
+/* ---------- الطباعة ---------- */
+@media print{
+  nav,.np{display:none!important}
+  body{background:#fff;color:#000;font-size:12px}
+  main{max-width:none;padding:0}
+  .card{border:0;box-shadow:none;padding:4px}
+  .card::before{display:none}
+  .t{overflow:visible;border:0}
+  table{min-width:0}
+  td,th{padding:3px;font-size:10px}
+  th{position:static;background:#f0f0f0}
+}
+</style>
 </head>
 <body>
 <nav id="nav"></nav><main id="m"></main>
 <script>
 const $=s=>document.querySelector(s);
 const WILAYAS=["أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار", "البليدة", "البويرة", "تمنراست", "تبسة", "تلمسان", "تيارت", "تيزي وزو", "الجزائر", "الجلفة", "جيجل", "سطيف", "سعيدة", "سكيكدة", "سيدي بلعباس", "عنابة", "قالمة", "قسنطينة", "المدية", "مستغانم", "المسيلة", "معسكر", "ورقلة", "وهران", "البيض", "إليزي", "برج بوعريريج", "بومرداس", "الطارف", "تندوف", "تيسمسيلت", "الوادي", "خنشلة", "سوق أهراس", "تيبازة", "ميلة", "عين الدفلى", "النعامة", "عين تموشنت", "غرداية", "غليزان", "تيميمون", "برج باجي مختار", "أولاد جلال", "بني عباس", "عين صالح", "عين قزام", "تقرت", "جانت", "المغير", "المنيعة", "أفلو", "بريكة", "القنطرة", "بئر العاتر", "العريشة", "قصر الشلالة", "عين وسارة", "مسعد", "قصر البخاري", "بوسعادة", "الأبيض سيدي الشيخ"];
-const def={set:{year:'2026/2027',school:'',wilaya:'',baladiya:'',dir:'',nad:'',ma:'',mr:'',mt:''},terms:[{n:'الفصل 1',a:'',b:''},{n:'الفصل 2',a:'',b:''},{n:'الفصل 3',a:'',b:''}],hol:[],cls:[],st:[],tt:{},cx:{},ab:{}};
-let D;try{D=JSON.parse(localStorage.getItem('abs3'))||def}catch(e){D=def}
-D.th=D.th||[6,12,18];
+const DZ=[["01","أدرار",["أدرار","أولاد أحمد تيمي","أولف","إن زغمير","اقبلي","السبع","بودة","تامست","تامنطيط","تسابيت","تيت","تيمقتن","رقان","زاوية كنتة","سالي","فنوغيل"]],["02","الشلف",["أبو الحسن","أم الدروع","أولاد بن عبد القادر","أولاد عباس","أولاد فارس","الأبيض مجاجة","الحجاج","الزبوجة","الشطية","الشلف","الصبحة","الظهرة","الكريمية","المرسى","الهرانفة","بريرة","بنايرية","بني بوعتاب","بني حواء","بني راشد","بوزغاية","بوقادير","تاجنة","تاوقريت","تلعصة","تنس","حرشون","سنجاس","سيدي عبد الرحمن","سيدي عكاشة","عين مران","مصدق","وادي الفضة","وادي سلي","وادي قوسين"]],["03","الأغواط",["أفلو","الأغواط","البيضاء","الحاج مشري","الحويطة","الخنق","العسافية","الغيشة","بريدة","بن ناصر بن شهرة","تاجرونة","تاجموت","تاويالة","حاسي الدلاعة","حاسي الرمل","سبقاق","سيدي بوزيد","سيدي مخلوف","عين سيدي علي","عين ماضي","قصر الحيران","قلتة سيدي سعد","وادي مرة","وادي مزي"]],["04","أم البواقي",["أم البواقي","أولاد حملة","أولاد زواي","أولاد قاسم","البلالة","الجازية","الحرملية","الرحية","الزرق","الضلعة","العامرية","الفجوج بوغرارة سعودي","بئر الشهداء","بحير الشرقي","بريش","سوق نعمان","سيقوس","عين البيضاء","عين الديس","عين الزيتون","عين ببوش","عين فكرون","عين كرشة","عين مليلة","فكيرينة","قصر الصباحي","مسكيانة","هنشير تومغني","وادي نيني"]],["05","باتنة",["أريس","أولاد سلام","أولاد سي سليمان","أولاد عمار","أولاد عوف","أولاد فاضل","إشمول","إمدوكل","إينوغيسن","الجزار","الحاسي","الرحبات","الشمرة","القصبات","القيقبة","المعذر","باتنة","بريكة","بني فضالة الحقانية","بوزينة","بولهيلات","بومقر","بومية","بيطام","تازولت","تاكسلانت","تالخمت","تغرغار","تكوت","تيغانمين","تيلاطو","تيمقاد","ثنية العابد","جرمة","حيدوسة","رأس العيون","زانة البيضاء","سريانة","سفيان","سقانة","شير","عزيل عبد القادر","عين التوتة","عين جاسر","عين ياقوت","عيون العصافير","غسيرة","فسديس","فم الطوب","قصر بلزمة","كيمل","لارباع","لازرو","لمسان","مروانة","معافة","منعة","نقاوس","وادي الشعبة","وادي الطاقة","وادي الماء"]],["06","بجاية",["أدكار","أقبو","أكفادو","أمالو","أميزور","أوزلاقن","أوقاس","أيت إسماعيل","أيت رزين","إغيل علي","اغرم","الفلاي","القصر","بجاية","برباشة","بني جليل","بني كسيلة","بني معوش","بني مليكش","بو جليل","بوحمزة","بوخليفة","تازمالت","تاسكريوت","تالة حمزة","تامريجت","تامقرة","تاوريرت إغيل","توجة","تيزي نبربر","تيشي","تيفرة","تيمزريت","تينبدار","خراطة","درقينة","ذراع القايد","سمعون","سوق اوفلا","سوق لإثنين","سيدي عياد","سيدي عيش","شلاطة","شميني","صدوق","طيبان","فرعون","فناية الماثن","كنديرة","مالبو","مسيسنة","وادي غير"]],["07","بسكرة",["أورلال","أوماش","الحاجب","الحوش","الغروس","الفيض","القنطرة","المزيرعة","الوطاية","برانيس","برج بن عزوز","بسكرة","بوشقرون","جمورة","خنقة سيدي ناجي","زريبة الوادي","سيدي عقبة","شتمة","طولقة","عين الناقة","عين زعطوط","فوغالة","ليشانة","ليوة","مخادمة","مشونش","مليلي"]],["08","بشار",["العبادلة","القنادسة","المريجة","بشار","بني ونيف","بوكايس","تاغيت","تبلبالة","عرق فراج","لحمر","مشرع هواري بومدين","موغل"]],["09","البليدة",["أولاد يعيش","الأربعاء","البليدة","الشبلي","الشريعة","الشفة","الصومعة","العفرون","اولاد سلامة","بن خليل","بني تامو","بني مراد","بوعرفة","بوعينان","بوفاريك","بوقرة","جبابرة","حمام ملوان","صوحان","عين الرمانة","قرواو","مفتاح","موزاية","وادي العلايق","وادي جر"]],["10","البويرة",["آث منصور","أعمر","أغبالو","أمشدالة","أهل القصر","أولاد راشد","أيت لعزيز","الأخضرية","الأسنام","البويرة","الحاكمية","الحجرة الزرقاء","الخبوزية","الدشمية","العجيبة","المعمورة","المقراني","الهاشمية","بئر غبالو","برج أوخريص","بشلول","بودربالة","بوكرم","تاغزوت","تاقديت","جباحية","حنيف","حيزر","ديرة","روراوة","ريدان","زبربر","سحاريج","سور الغزلان","سوق الخميس","شرفة","عين الترك","عين الحجر","عين العلوي","عين بسام","قادرية","قرومة","مزدور","معلة","وادي البردي"]],["11","تمنراست",["أدلس","ابلسة","تاظروك","تمنراست","عين امقل"]],["12","تبسة",["أم علي","الحمامات","الحويجبات","الشريعة","العقلة","العقلة المالحة","العوينات","الكويف","الماء الابيض","المريج","المزرعة","الونزة","بئر الذهب","بئر العاتر","بئر مقدم","بجن","بكارية","بوخضرة","بولحاف الدير","تبسة","ثليجان","سطح قنطيس","صفصاف الوسرى","عين الزرقاء","فركان","قريقر","مرسط","نقرين"]],["13","تلمسان",["أولاد رياح","أولاد ميمون","البويهي","الحناية","الرمشي","السواحلية","السواني","العريشة","العزايل","الغزوات","الفحول","القور","باب العسة","بن سكران","بني بهدل","بني بوسعيد","بني خلاد","بني سنوس","بني صميل","بني مستر","بني وارسوس","بوحلو","تلمسان","تيانت","تيرني بني هديل","جبالة","حمام بوغرارة","دار يغمراسن","زناتة","سبدو","سبعة شيوخ","سوق الثلاثاء","سيدي الجيلالي","سيدي العبدلي","سيدي مجاهد","شتوان","صبرة","عمير","عين الكبيرة","عين النحالة","عين تالوت","عين غرابة","عين فتاح","عين فزة","عين يوسف","فلاوسن","مرسى بن مهيدي","مسيردة الفواقة","مغنية","منصورة","ندرومة","هنين","وادي الخضر"]],["14","تيارت",["الرحوية","الرشايقة","السبت","السبعين","السوقر","الفايجة","الناظورة","النعيمة","بوقرة","تاقدمت","تخمرت","توسنينة","تيارت","تيدة","جبيلات الرصفاء","جيلالي بن عمار","حمادية","دحموني","زمالة الأمير عبد القادر","سرغين","سي عبد الغني","سيدي بختي","سيدي حسني","سيدي عبد الرحمن","سيدي علي ملال","شحيمة","عين الحديد","عين الذهب","عين بوشقيف","عين دزاريت","عين كرمس","فرندة","قرطوفة","قصر الشلالة","مادنة","مدروسة","مدريسة","مشرع الصفا","مغيلة","ملاكو","مهدية","وادي ليلي"]],["15","تيزي وزو",["أبي يوسف","أزفون","أسي يوسف","أغريب","أقرو","أقني قغران","أيت أومالو","أيت بــوادو","أيت بومهدي","أيت تودرت","أيت خليلي","أيت شافع","أيت عقـواشة","أيت عيسى ميمون","أيت محمود","أيت يحي موسى","أيت يحيى","إبودرارن","إعــكورن","إفــرحــونان","إفليـــسن","إمســوحال","إيجــار","إيرجـــن","إيفيغاء","إيلـيــلتـن","إيلولة أومـــالو","اقبيل","الأربعــاء ناث إيراثن","بنــــي زمنزار","بني دوالة","بني زيكــي","بني عيسي","بني يني","بوجيمة","بوزقــن","بوغني","بونوح","تادمايت","تيرمتين","تيزي راشد","تيزي غنيف","تيزي نثلاثة","تيزي وزو","تيقـزيرت","تيمـيزار","ذراع الميزان","ذراع بن خدة","زكري","سوق الإثنين","سيدي نعمان","صوامـــع","عزازقة","عين الحمام","عين الزاوية","فريحة","فريقات","ماكودة","مشطراس","معـــاتقة","مقــلع","مكيرة","ميزرانـــة","واسيف","واضية","واقنون","يطــافن"]],["16","الجزائر",["ابن عكنون","الابيار","الجزائر الوسطى","الحراش","الحمامات","الخرايسية","الدار البيضاء","الدرارية","الدويرة","الرايس حميدو","الرحمانية","الرويبة","السحاولة","الشراقة","العاشور","القبة","القصبة","الكاليتوس","المحمدية","المدنية","المرادية","المرسى","المعالمة","المغارية","اولاد شبل","اولاد فايت","بئر توتة","بئر خادم","بئر مراد رايس","باب الزوار","باب الوادي","بابا حسن","باش جراح","براقي","برج البحري","برج الكيفان","بني مسوس","بوروبة","بوزريعة","بولوغين بن زيري","تسالة المرجة","جسر قسنطينة","حسين داي","حيدرة","دالي ابراهيم","رغاية","زرالدة","سطاوالي","سويدانية","سيدي امحمد","سيدي موسى","عين بنيان","عين طاية","محمد بلوزداد","هراوة","وادي السمار","وادي قريش"]],["17","الجلفة",["أم العظام","الادريسية","الجلفة","الخميس","الشارف","القديد","بن يعقوب","بنهار","بويرة الأحداب","بيرين","تعظميت","حاسي العش","حاسي بحبح","حاسي فدول","حد الصحاري","دار الشيوخ","دلدول","دويس","زعفران","زكار","سد الرحال","سلمانة","سيدي بايزيد","سيدي لعجال","عمورة","عين الإبل","عين الشهداء","عين فقه","عين معبد","عين وسارة","فيض البطمة","قرنيني","قطارة","مجبارة","مسعد","مليليحة"]],["18","جيجل",["أراقن سويسي","أولاد رابح","أولاد يحيى خدروش","الامير عبد القادر","الجمعة بني حبيبي","السطارة","الشحنة","الشقفة","الطاهير","العنصر","العوانة","القنار نشفي","الميلية","برج الطهر","بودريعة بني ياجيس","بوراوي بلهادف","بوسيف أولاد عسكر","تاكسنة","جيجل","جيملة","خيري واد عجول","زيامة منصورية","سلمى بن زيادة","سيدي عبد العزيز","سيدي معروف","غبالة","قاوس","وجانة"]],["19","سطيف",["أوريسيا","أولاد تبان","أولاد سي أحمد","أولاد صابر","أولاد عدوان","أيت نوال مزادة","التلة","الحامة","الدهامشة","الرصفة","الطاية","العلمة","الولجة","ايت تيزي","بئر العرش","بئر حدادة","بابور","بازر سكرة","بلاعة","بني شبانة","بني عزيز","بني فودة","بني موحلي","بني ورتيلان","بني وسين","بوسلام","بوطالب","بوعنداس","بوقاعة","بيضاء برج","تاشودة","تالة إيفاسن","تيزي نبشار","جميلة","حربيل","حمام السخنة","حمام قرقور","ذراع قبيلة","سرج الغول","سطيف","صالح باي","عموشة","عين أرنات","عين أزال","عين الحجر","عين الروى","عين السبت","عين الكبيرة","عين عباسة","عين لقراج","عين ولمان","قجال","قصر الابطال","قلال","قلتة زرقاء","قنزات","ماوكلان","مزلوق","معاوية","واد البارد"]],["20","سعيدة",["أولاد إبراهيم","أولاد خالد","الحساسنة","المعمورة","تيرسين","دوي ثابت","سعيدة","سيدي احمد","سيدي بوبكر","سيدي عمر","عين الحجر","عين السخونة","عين السلطان","مولاي العربي","هونت","يوب"]],["21","سكيكدة",["أم الطوب","أولاد حبابة","أولاد عطية","الحدائق","الحروش","الزيتونة","السبت","الشرايع","الغدير","القل","الكركرة","المرسى","الولجة بولبلوط","بكوش لخضر","بن عزوز","بني بشير","بني زيد","بني ولبان","بوشطاطة","بين الويدان","تمالوس","جندل سعدي محمد","حمادي كرومة","خناق مايو","رمضان جمال","زردازة","سكيكدة","سيدي مزغيش","صالح بو الشعور","عزابة","عين بوزيان","عين زويت","عين شرشار","عين قشرة","فلفلة","قنواع","مجاز الدشيش","وادي الزهور"]],["22","سيدي بلعباس",["الحصيبة","السهالة الثورة","الضاية","العمارنة","بئر الحمام","بضرابين المقراني","بلعربي","بن باديس","بن عشيبة شلية","بوجبهة البرج","بوخنفيس","تاودموت","تسالة","تغاليمت","تفسور","تلاغ","تلموني","تنيرة","حاسي دحو","حاسي زهانة","راس الماء","رجم دموش","زروالة","سفيزف","سيدي ابراهيم","سيدي بلعباس","سيدي حمادوش","سيدي خالد","سيدي دحو الزاير","سيدي شعيب","سيدي علي بن يوب","سيدي علي بوسيدي","سيدي لحسن","سيدي يعقوب","شيطوان البلايلة","طابية","عين أدن","عين البرد","عين الثريد","عين تندمين","عين قادة","لمطار","مرحوم","مرين","مزاورو","مسيد","مصطفى بن ابراهيم","مكدرة","مولاي سليسن","وادي السبع","وادي تاوريرة","وادي سفيون"]],["23","عنابة",["البوني","التريعات","الحجار","الشرفة","العلمة","برحال","سرايدي","سيدي عمار","شطايبي","عنابة","عين الباردة","واد العنب"]],["24","قالمة",["الدهوارة","الركنية","الفجوج","برج صباط","بلخير","بن جراح","بني مزلين","بوحشانة","بوحمدان","بوشقوف","بوعاتي محمود","بومهرة أحمد","تاملوكة","جبالة الخميسي","حمام النبايل","حمام دباغ","رأس العقبة","سلاوة عنونة","عين العربي","عين بن بيضاء","عين رقادة","عين صندل","عين مخلوف","قالمة","قلعة بوصبع","لخزارة","مجاز الصفاء","مجاز عمار","نشماية","هواري بومدين","هيليوبوليس","وادي الزناتي","وادي الشحم","وادي فراغة"]],["25","قسنطينة",["أبن باديس الهرية","أولاد رحمون","ابن زياد","الخروب","بني حميدان","بوجريو مسعود","حامة بوزيان","ديدوش مراد","زيغود يوسف","عين السمارة","عين عبيد","قسنطينة"]],["26","المدية",["أم الجليل","أولاد إبراهيم","أولاد امعرف","أولاد بوعشرة","أولاد دايد","أولاد عنتر","أولاد هلال","البرواقية","الحمدانية","الحوضان","الربعية","الزبيرية","السانق","السواقي","الشهبونية","العزيزية","العمارية","العوينات","العيساوية","القلب الكبير","الكاف الاخضر","المدية","بئر بن عابد","بعطة","بن شكاو","بني سليمان","بوسكن","بوشراحيل","بوعيش","بوعيشون","بوغار","بوغزول","تابلاط","تفراوت","تمسقيدة","تيزي مهدي","ثلاث دوائر","جواب","حناشة","خمس جوامع","دراق","ذراع السمار","سدراية","سغوان","سي المحجوب","سيدي الربيع","سيدي دامد","سيدي زهار","سيدي زيان","سيدي نعمان","شلالة العذاورة","شنيقل","عزيز","عوامري","عين اقصير","عين بوسيف","قصر البخاري","مجبر","مزغنة","مغراوة","مفاتحة","ميهوب","وادي حربيل","وزرة"]],["27","مستغانم",["أولاد بوغالم","أولاد مع الله","الحسيان (بني ياحي","السوافلية","الطواهرية","بن عبد المالك رمضان","بوقيراط","تزقايت","حاسي ماماش","حجاج","خضرة","خير الدين","ستيدية","سور","سيدي بلعطار","سيدي علي","سيدي لخضر","سيرات","صفصاف","صيادة","عشعاشة","عين بودينار","عين تادلس","عين سيدي الشريف","عين نويسي","فرناقة","ماسرة","مزغران","مستغانم","منصورة","نكمارية","وادي الخير"]],["28","المسيلة",["أولاد دراج","أولاد سليمان","أولاد سيدي ابراهيم","أولاد عدي لقبالة","أولاد ماضي","أولاد منصور","الحوامد","السوامع","المسيلة","المطارفة","المعاضيد","الهامل","امجدل","بئر فضة","برهوم","بلعايبة","بن زوه","بن سرور","بني يلمان","بوسعادة","بوطي السايح","تارمونت","تامسة","جبل مساعد","حمام الضلعة","خبانة","خطوطي سد الجير","دهاهنة","زرزور","سليم","سيدي امحمد","سيدي عامر","سيدي عيسى","سيدي هجرس","شلال","عين الحجل","عين الخضراء","عين الريش","عين الملح","عين فارس","محمد بوضياف","مسيف","معاريف","مقرة","مناعة","ولتام","ونوغة"]],["29","معسكر",["البرج","الحشم","السهايلية","الشرفاء","العلايمية","الغمري","القرط","القطنة","القعدة","المأمونية","المحمدية","المطمور","المنور","بنيان","بوحنيفية","بوهني","تيزي","تيغنيف","حسين","خلوية","رأس عين عميروش","زلامطة","زهانة","سجرارة","سيدي بوسعيد","سيدي عبد الجبار","سيدي عبد المومن","سيدي قادة","سيق","عقاز","عوف","عين أفرص","عين فارس","عين فراح","عين فكان","غروس","غريس","فراقيق","فروحة","قرجوم","ماقضة","ماوسة","معسكر","مقطع الدوز","نسمط","وادي الأبطال","وادي التاغية"]],["30","ورقلة",["البرمة","الرويسات","انقوسة","حاسي بن عبد الله","حاسي مسعود","سيدي خويلد","عين البيضاء","ورقلة"]],["31","وهران",["أرزيو","البراية","السانية","العنصر","الكرمة","المرسى الكبير","بئر الجير","بطيوة","بن فريحة","بوتليليس","بوسفر","بوفاتيس","حاسي بن عقبة","حاسي بونيف","حاسي مفسوخ","سيدي الشحمي","سيدي بن يبقى","طفراوي","عين البية","عين الترك","عين الكرمة","قديل","مرسى الحجاج","مسرغين","وادي تليلات","وهران"]],["32","البيض",["اربوات","الأبيض سيدي الشيخ","البنود","البيض","الخيثر","الشقيق","الغاسول","الكاف الأحمر","المحرة","بريزينة","بوسمغون","بوعلام","بوقطب","توسمولين","رقاصة","ستيتن","سيدي سليمان","سيدي طيفور","سيدي عامر","شلالة","عين العراك","كراكدة"]],["33","إليزي",["إن أمناس","إيليزي","برج عمر إدريس","دبداب"]],["34","برج بوعريريج",["أولاد أبراهم","أولاد دحمان","أولاد سيدي ابراهيم","الحمادية","الرابطة","العش","العناصر","القصور","القلة","الماين","المنصورة","المهير","الياشير","بئر قاصد علي","برج الغدير","برج بوعريرج","برج زمورة","بليمور","بن داود","تسامرت","تفرق","تقلعيت","تيكستار","ثنية النصر","جعافرة","حرازة","حسناوة","خليل","رأس الوادي","سيدي أمبارك","عين تاغروت","عين تسرة","غيلاسة","مجانة"]],["35","بومرداس",["أعفير","أولاد عيسى","أولاد موسى","أولاد هداج","الاربعطاش","الثنية","الخروبة","الناصرية","برج منايل","بغلية","بن شود","بني عمران","بودواو","بودواو البحري","بوزقزة قدارة","بومرداس","تاورقة","تيجلابين","تيمزريت","جنات","حمادي","خميس الخشنة","دلس","زموري","سوق الحد","سي مصطفى","سيدي داود","شعبة العامر","عمال","قورصو","لقاطة","يسر"]],["36","الطارف",["البسباس","الذرعـان","الزيتونة","السوارخ","الشافية","الشط","الطارف","العيون","القالة","بحيرة الطيور","بريحان","بن مهيدي","بوثلجة","بوحجار","بوقوس","حمام بني صالح","رمل السوق","زريزر","شبيطة مختار","شحاني","عصفور","عين العسل","عين الكرمة","وادي الزيتون"]],["37","تندوف",["أم العسل","تندوف"]],["38","تيسمسيلت",["أولاد بسام","الأربعاء","الأزهرية","العيون","المعاصم","الملعب","اليوسفية","برج الأمير عبد القادر","برج بونعامة","بني شعيب","بني لحسن","بوقائد","تملاحت","تيسمسيلت","ثنية الاحد","خميستي","سيدي العنتري","سيدي بوتوشنت","سيدي سليمان","سيدي عابد","عماري","لرجام"]],["39","الوادي",["البياضة","الحمراية","الدبيلة","الرباح","الرقيبة","الطالب العربي","الطريفاوي","العقلة","المقرن","النخلة","الوادي","اميه وانسة","بن قشة","تغزوت","حاسي خليفة","حساني عبد الكريم","دوار الماء","سيدي عون","قمار","كوينين","وادي العلندة","ورماس"]],["40","خنشلة",["أولاد رشاش","الحامة","الرميلة","المحمل","الولجة","انسيغة","بابار","بغاي","بوحمامة","تاوزيانت","جلال","خنشلة","خيران","ششار","شلية","طامزة","عين الطويلة","قايس","متوسة","مصارة","يابوس"]],["41","سوق أهراس",["أم العظايم","أولاد إدريس","أولاد مومن","الحدادة","الحنانشة","الخضارة","الدريعة","الراقوبة","الزعرورية","الزوابي","المراهنة","المشروحة","بئر بوحوش","تاورة","ترقالت","تيفاش","خميسة","سافل الويدان","سدراتة","سوق أهراس","سيدي فرج","عين الزانة","عين سلطان","مداوروش","وادي الكبريت","ويلان"]],["42","تيبازة",["أحمر العين","أغبال","الأرهاط","الحطاطبة","الداموس","الشعيبة","القليعة","الناظور","بني ميلك","بواسماعيل","بورقيقة","بوهارون","تيبازة","حجرة النص","حجوط","خميستي","دواودة","سيدي راشد","سيدي سميان","سيدي عامر","سيدي غيلاس","شرشال","عين تاقورايت","فوكة","قوراية","مراد","مسلمون","مناصر"]],["43","ميلة",["أحمد راشدي","أولاد اخلوف","اعميرة اراس","التلاغمة","الرواشد","الشيقارة","العياضي برباس","القرارم قوقة","بن يحي عبد الرحمن","بوحاتم","تاجنانت","ترعي باينان","تسالة لمطاعي","تسدان حدادة","تيبرقنت","حمالة","دراحي بوصلاح","زغاية","سيدي خليفة","سيدي مروان","شلغوم العيد","عين البيضاء أحريش","عين التين","عين الملوك","فرجيوة","مشيرة","ميلة","مينار زارزة","وادي العثمانية","وادي النجاء","وادي سقان","يحي بني قشة"]],["44","عين الدفلة",["الحسانية","الحسينية","الروينة","العامرة","العبادية","العطاف","الماين","المخاطرية","بئر ولد خليفة","بربوش","برج الأمير خالد","بطحية","بلعاص","بن علال","بوراشد","بومدفع","تاشتة زقاغة","تبركانين","جليدة","جمعة أولاد الشيخ","جندل","حمام ريغة","خميس مليانة","زدين","سيدي الأخضر","طارق بن زياد","عريب","عين الاشياخ","عين البنيان","عين التركي","عين الدفلى","عين السلطان","عين بويحيى","مليانة","واد الجمعة","وادي الشرفاء"]],["45","النعامة",["البيوض","القصدير","المشرية","النعامة","تيوت","جنين بورزق","سفيسيفة","عسلة","عين الصفراء","عين بن خليل","مغرار","مكمن بن عمار"]],["46","عين تيموشنت",["أغلال","أولاد الكيحل","أولاد بوجمعة","الأمير عبد القادر","الحساسنة","العامرية","المالح","المساعيد","بني صاف","بوزجار","تارقة","تامزورة","حاسي الغلة","حمام بوحجر","سيدي بن عدة","سيدي بومدين","سيدي صافي","سيدي ورياش","شعبة اللحم","شنتوف","عقب الليل","عين الأربعاء","عين الطلبة","عين الكيحل","عين تموشنت","وادي الصباح","وادي برقش","ولهاصة الغرابة"]],["47","غرداية",["العطف","القرارة","المنصورة","بريان","بونورة","زلفانة","سبسب","ضاية بن ضحوة","غرداية","متليلي"]],["48","غليزان",["أولاد سيدي الميهوب","أولاد يعيش","الحاسي","الحمادنة","الرمكة","القطار","القلعة","المطمر","الولجة","بلعسل بوزقزة","بن داود","بني درقن","بني زنطيس","جديوية","حد الشكالة","حمري","دار بن عبد الله","زمورة","سوق الحد","سيدي أمحمد بن علي","سيدي امحمد بن عودة","سيدي خطاب","سيدي سعادة","سيدي لزرق","عمي موسى","عين الرحمة","عين طارق","غليزان","لحلاف","مازونة","مديونة","مرجة سيدي عابد","منداس","وادي الجمعة","وادي السلام","وادي رهيو","واريزان","يلل"]],["49","تيميمون",["أوقروت","أولاد السعيد","أولاد عيسى","المطارفة","تنركوك","تيميمون","دلدول","شروين","طالمين","قصر قدور"]],["50","برج باجي مختار",["برج باجي مختار","تيمياوين"]],["51","أولاد جلال",["أولاد جلال","الدوسن","الشعيبة","بسباس","رأس الميعاد","سيدي خالد"]],["52","بني عباس",["أولاد خضير","إقلي","القصابي","الواتة","بن يخلف","بني عباس","تامترت","تيمودي","كرزاز"]],["53","عين صالح",["إينغر","عين صالح","فقارة الزوى"]],["54","عين قزام",["تين زواتين","عين قزام"]],["55","تقرت",["الحجيرة","الزاوية العابدية","الطيبات","العالية","المقارين","المنقر","النزلة","بلدة اعمر","بن ناصر","تبسبست","تقرت","تماسين","سيدي سليمان"]],["56","جانت",["برج الحواس","جانت"]],["57","المغير",["أم الطيور","المرارة","المغير","تندلة","جامعة","سطيل","سيدي خليل","سيدي عمران"]],["58","المنيعة",["المنيعة","حاسي الفحل","حاسي القارة"]]];
+const DZL=[...new Set(DZ.flatMap(w=>[w[1],...w[2]]))];
+let EXC=null,DV=0,RC={};
+const def={set:{year:'2026/2027',school:'',wilaya:'',baladiya:'',dir:'',nad:'',ma:'',mr:'',mt:''},terms:[{n:'الفصل 1',a:'',b:''},{n:'الفصل 2',a:'',b:''},{n:'الفصل 3',a:'',b:''}],hol:[],cls:[],st:[],tt:{},cx:{},ab:{},ju:{},lt:{},tp:{},tc:[],nl:[],cdTh:[3,7,15,30],cdWk:true,lr:3,ex:[]};
+const mk=()=>JSON.parse(JSON.stringify(def));
+function norm(){D.th=D.th||[6,12,18];if(!D.v2){D.cdTh=[3,7,15,30];D.v2=1}D.cdTh=D.cdTh||[3,7,15,30];while(D.cdTh.length<4)D.cdTh.push(0);EXC=null;DV++;if(D.cdWk===undefined)D.cdWk=true;D.lr=D.lr||3;D.set=D.set||{};D.terms=D.terms||mk().terms;['ab','ju','lt','tp','cx','tt'].forEach(k=>D[k]=D[k]||{});['nl','tc','st','cls','hol','ex'].forEach(k=>D[k]=D[k]||[])}
+let D;try{D=Object.assign(mk(),JSON.parse(localStorage.getItem('abs3'))||{})}catch(e){D=mk()}
+norm();
 let token=localStorage.getItem('gh_token')||'', user=null, tmr=null, pollTimer=null, syncing=false, msg='غير متصل بالسيرفر';
-const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
-const save=()=>{localStorage.setItem('abs3',JSON.stringify(D));push()};
+const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const base=native?'http://127.0.0.1:8787':'';const r=await fetch(base+url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
+const save=()=>{EXC=null;DV++;localStorage.setItem('abs3',JSON.stringify(D));push()};
 function push(){if(!token)return;clearTimeout(tmr);tmr=setTimeout(async()=>{try{const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt;msg='تم الحفظ على السيرفر '+new Date().toLocaleTimeString();setStatus()}catch(e){msg='تعذر الحفظ على السيرفر: '+e.message;setStatus()}},500)}
 function setStatus(){const e=document.getElementById('sy');if(e)e.textContent=msg}
-async function pull(){const r=await api('/api/state');if(r.state&&r.state.data){D=Object.assign({},def,r.state.data);D.th=D.th||[6,12,18];localStorage.setItem('abs3',JSON.stringify(D));window._lastServerUpdate=r.updatedAt;msg='تم تحميل البيانات من السيرفر'}else{msg='لا توجد بيانات على السيرفر؛ تم رفع بيانات هذا الجهاز';const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt}R();setStatus()}
+async function pull(){const r=await api('/api/state');if(r.state&&r.state.data){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));window._lastServerUpdate=r.updatedAt;msg='تم تحميل البيانات من السيرفر'}else{msg='لا توجد بيانات على السيرفر؛ تم رفع بيانات هذا الجهاز';const x=await api('/api/state',{method:'PUT',body:JSON.stringify({state:D})});window._lastServerUpdate=x.updatedAt}R();setStatus()}
 async function login(){try{const username=$('#loginUser').value.trim(),password=$('#loginPass').value;const r=await api('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});token=r.token;user=r.user;localStorage.setItem('gh_token',token);await pull();startPolling()}catch(e){alert(e.message)}}
 async function setupAdmin(){try{const username=$('#setupUser').value.trim(),password=$('#setupPass').value;const r=await api('/api/auth/setup',{method:'POST',body:JSON.stringify({username,password})});token=r.token;user=r.user;localStorage.setItem('gh_token',token);await pull();startPolling()}catch(e){alert(e.message)}}
 async function logout(){try{await api('/api/auth/logout',{method:'POST',body:'{}'})}catch{}token='';user=null;localStorage.removeItem('gh_token');clearInterval(pollTimer);msg='تم تسجيل الخروج';R()}
 async function initServer(){try{const st=await api('/api/auth/status');if(!token){renderGate(st.setupRequired);return}const me=await api('/api/auth/me');user=me.user;await pull();startPolling()}catch(e){token='';localStorage.removeItem('gh_token');renderGate(false,e.message)}}
 function renderGate(setup,error=''){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML=`<div class="card" style="max-width:520px;margin:8vh auto"><h2 style="color:var(--ac);margin-top:0">تسيير غيابات التلاميذ</h2><p>تسجيل الدخول إلى السيرفر المحلي وتخزين بيانات المؤسسة مركزيًا.</p>${error?`<p style="color:var(--red)">${esc(error)}</p>`:''}${setup?`<b>الإعداد لأول مرة — إنشاء حساب المسؤول</b><label>اسم المستخدم (3 أحرف على الأقل)</label><input id="setupUser" autocomplete="username" style="width:100%" placeholder="admin"><label style="margin-top:10px">كلمة المرور (8 أحرف على الأقل)</label><input id="setupPass" type="password" autocomplete="new-password" style="width:100%"><div class="r"><button class="p" onclick="setupAdmin()">إنشاء حساب المسؤول</button></div>`:`<b>تسجيل الدخول</b><label>اسم المستخدم</label><input id="loginUser" autocomplete="username" style="width:100%"><label style="margin-top:10px">كلمة المرور</label><input id="loginPass" type="password" autocomplete="current-password" style="width:100%" onkeydown="if(event.key==='Enter')login()"><div class="r"><button class="p" onclick="login()">دخول</button></div>`}<p style="font-size:12px">تأكد أن نافذة السيرفر مفتوحة على الجهاز الرئيسي. أنشئ حساب المسؤول مرة واحدة عند أول تشغيل.</p></div>`}
-function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!token||syncing)return;try{syncing=true;const r=await api('/api/state');if(r.state&&r.state.data&&r.updatedAt&&r.updatedAt!==window._lastServerUpdate){const local=JSON.parse(localStorage.getItem('abs3')||'{}');if(JSON.stringify(local)!==JSON.stringify(r.state.data)){D=Object.assign({},def,r.state.data);D.th=D.th||[6,12,18];localStorage.setItem('abs3',JSON.stringify(D));msg='تم تحديث البيانات من السيرفر';R()}window._lastServerUpdate=r.updatedAt;setStatus()}}catch(e){msg='انقطع الاتصال بالسيرفر';setStatus()}finally{syncing=false}},3000)}
+function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!token||syncing)return;try{syncing=true;const r=await api('/api/state');if(r.state&&r.state.data&&r.updatedAt&&r.updatedAt!==window._lastServerUpdate){const local=JSON.parse(localStorage.getItem('abs3')||'{}');if(JSON.stringify(local)!==JSON.stringify(r.state.data)){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));msg='تم تحديث البيانات من السيرفر';R()}window._lastServerUpdate=r.updatedAt;setStatus()}}catch(e){msg='انقطع الاتصال بالسيرفر';setStatus()}finally{syncing=false}},3000)}
 const DAYS=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],HR=[1,2,3,4,5,6,7,8,9];
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const dt=s=>new Date(s+'T00:00');
 const today=iso(new Date());
-let tab=0,S={cls:'',date:today,per:'month',mon:today.slice(0,7)};
-const TABS=['الإعدادات','الأقسام والتلاميذ','استعمال الزمن','التسجيل اليومي','التقارير','الكشف الشهري','الإشعارات'];
+let tab=0,S={cls:'',date:today,per:'month',mon:today.slice(0,7),mm:'abs',q:''};
+const TABS=['الرئيسية','الإعدادات','الأقسام والتلاميذ','استعمال الزمن','التسجيل اليومي','التقارير','الكشف الشهري','الإشعارات','التبريرات'];
+const ALLOW=[0,5,7];
+const LV=['','إشعار أول','إشعار ثاني','إشعار مضمون','فصل'];
+const PERS=[['day','يومي'],['week','أسبوعي'],['month','شهري'],['term','فصلي'],['year','سنوي']];
 const isHol=s=>D.hol.some(h=>h.a&&h.b&&s>=h.a&&s<=h.b);
 const sched=(c,s)=>isHol(s)?[]:((D.tt[c]||{})[dt(s).getDay()]||[]);
 const held=(c,s)=>{const x=((D.cx[s]||{})[c])||[];return sched(c,s).filter(h=>!x.includes(h))};
+const act=()=>D.st.filter(s=>!s.x);
+const buildEx=()=>{const m={};D.ex.forEach(e=>{(m[e.sid]=m[e.sid]||[]).push(e)});return m};
+const exOf=(d,id)=>((EXC||(EXC=buildEx()))[id]||[]).find(e=>e.t!='parent'&&e.a<=d&&d<=(e.b||e.a));
+const jus=(d,id)=>!!((D.ju[d]||{})[id]||{}).j||!!exOf(d,id);
+const isLate=(d,id)=>!!((D.lt[d]||{})[id]);
 function rng(a,b){const r=[];for(let d=dt(a);iso(d)<=b;d.setDate(d.getDate()+1))r.push(iso(d));return r}
 function period(){
  const d=S.date,x=dt(d);
@@ -66,82 +277,273 @@ function period(){
  if(S.per=='month'){const y=x.getFullYear(),m=x.getMonth();return[iso(new Date(y,m,1)),iso(new Date(y,m+1,0))]}
  if(S.per=='term'){const t=D.terms.find(t=>t.a&&t.b&&d>=t.a&&d<=t.b);return t?[t.a,t.b]:[d,d]}
  const y=parseInt(D.set.year)||x.getFullYear();return[y+'-09-01',(y+1)+'-08-31']}
-const absH=(id,c,dates)=>{let n=0;dates.forEach(d=>{const a=(D.ab[d]||{})[id];if(a){const hh=held(c,d);a.forEach(h=>{if(hh.includes(h))n++})}});return n};
+// ---- حساب الغياب: الكلي / المبرر / غير المبرر / التأخرات / الأيام المتتالية
+function absSplit(id,c,dates){let t=0,j=0,l=0;dates.forEach(d=>{const a=(D.ab[d]||{})[id];if(a){const hh=held(c,d),k=a.filter(h=>hh.includes(h)).length;t+=k;if(jus(d,id))j+=k}if(isLate(d,id)&&sched(c,d).length)l++});return{t,j,u:t-j,l,eq:Math.floor(l/(D.lr||3))}}
+const addD=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)};
+// آخر يوم مسجَّل فيه غياب (حتى اليوم) — هو تاريخ الاحتساب الافتراضي
+function asOfDate(){if(S.asof)return S.asof;let m='';for(const d in D.ab){if(d<=today&&d>m&&Object.keys(D.ab[d]).length)m=d}return m||today}
+// يُصفَّر التسلسل بحضور الولي أو بإعادة الإدماج
+function lastReset(s,asOf){let m='';((EXC||(EXC=buildEx()))[s.id]||[]).forEach(e=>{if(e.t=='parent'&&e.a<=asOf&&e.a>m)m=e.a});if(s.rd&&s.rd<=asOf&&s.rd>m)m=s.rd;return m}
+// طول التسلسل الحالي لقائمة تواريخ غياب غير مبرر مرتبة؛ تنقطع السلسلة بأي يوم دراسة لم يغب فيه (أو غاب بمبرر)
+function runOf(c,list,asOf){let len=0,start='',prev='';
+ for(const d of list){
+  if(prev){let gap=0,link=true;for(let x=addD(prev,1);x<d;x=addD(x,1)){if(held(c,x).length){link=false;break}gap++}
+   if(!link){len=0;start=''}else if(D.cdWk)len+=gap}
+  len++;if(len==1)start=d;prev=d}
+ if(!prev)return{len:0,start:''};
+ for(let x=addD(prev,1);x<=asOf;x=addD(x,1))if(held(c,x).length)return{len:0,start:''};
+ return{len,start}}
+function runsAll(asOf){
+ const key=DV+'|'+asOf;if(RC.key==key)return RC.map;
+ const sm={};D.st.forEach(s=>{if(!s.x)sm[s.id]=s});
+ const L={};
+ Object.keys(D.ab).sort().forEach(d=>{if(d>asOf)return;const m=D.ab[d];for(const id in m){const s=sm[id];if(!s)continue;const hh=held(s.c,d);if(m[id].some(h=>hh.includes(h))&&!jus(d,id))(L[id]=L[id]||[]).push(d)}});
+ const res={};
+ for(const id in L){const s=sm[id],pe=lastReset(s,asOf);res[id]=runOf(s.c,pe?L[id].filter(d=>d>pe):L[id],asOf)}
+ RC={key,map:res};return res}
+const lvD=n=>{for(let i=3;i>=0;i--)if(D.cdTh[i]>0&&n>=D.cdTh[i])return i+1;return 0};
+function stat(s,ds){const x=absSplit(s.id,s.c,ds||[]),r=runsAll(asOfDate())[s.id]||{len:0,start:''};return{...x,streak:r.len,start:r.start,h:x.u+x.eq,lv:lvD(r.len)}}
+// حالة التلميذ مع ساعات الغياب منذ بداية التسلسل
+function stN(s){const r=stat(s,[]);return r.lv?stat(s,rng(r.start,asOfDate())):r}
 const heldN=(c,dates)=>dates.reduce((n,d)=>n+held(c,d).length,0);
 const schedN=(c,dates)=>dates.reduce((n,d)=>n+sched(c,d).length,0);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const clsSel=(all)=>`<select id="cs">${all?'<option value="">كل الأقسام</option>':''}${D.cls.map(c=>`<option ${c==S.cls?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
+const clsSel=(all)=>`<select id="cs">${all?`<option value="" ${!S.cls?'selected':''}>كل الأقسام</option>`:''}${D.cls.map(c=>`<option ${c==S.cls?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
+const perBar=(all)=>`الفترة: <select onchange="S.per=this.value;R()">${PERS.map(([k,l])=>`<option value="${k}" ${S.per==k?'selected':''}>${l}</option>`).join('')}</select><input type="date" value="${S.date}" onchange="S.date=this.value;R()">${all===undefined?'':' القسم: '+clsSel(all)}`;
 function nav(){$('#nav').innerHTML=TABS.map((t,i)=>`<button class="${i==tab?'on':''}" onclick="tab=${i};R()">${t}</button>`).join('')}
-function R(){if(!token){renderGate(false);return}nav();if(!S.cls&&D.cls.length)S.cls=D.cls[0];[v0,v1,v2,v3,v4,v5,v6][tab]();
+function R(){if(!token){renderGate(false);return}nav();if(!S.cls&&D.cls.length&&!ALLOW.includes(tab))S.cls=D.cls[0];[vH,v0,v1,v2,v3,v4,v5,v6,vE][tab]();
  const cs=$('#cs');if(cs)cs.onchange=e=>{S.cls=e.target.value;R()}}
+// ---- حفظ الملفات وتصديرها (Excel / CSV)
+function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';x.onload=ok;x.onerror=()=>no(new Error('تعذر تحميل مكتبة Excel، تحقق من الإنترنت'));document.head.appendChild(x)})}
+async function saveBlob(name,blob){
+ const cap=window.Capacitor,nat=!!(cap&&cap.isNativePlatform&&cap.isNativePlatform());
+ if(nat){try{const FS=cap.Plugins.Filesystem,SH=cap.Plugins.Share;const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(blob)});const w=await FS.writeFile({path:name,data:b64,directory:'CACHE'});await SH.share({title:name,url:w.uri,dialogTitle:'حفظ أو مشاركة الملف'});return}catch(e){if(e&&/cancel/i.test(String(e.message||e)))return;alert('تعذر حفظ الملف: '+(e&&e.message||e))}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},2000)}
+async function exportSheets(name,sheets){
+ let blob,ext='xlsx';
+ try{await loadXLSX();const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};sheets.forEach(s=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s.rows),s.n.slice(0,31)));blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+ catch(e){ext='csv';const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';blob=new Blob(['﻿'+sheets.map(s=>s.n+'\n'+s.rows.map(r=>r.map(q).join(',')).join('\n')).join('\n\n')],{type:'text/csv;charset=utf-8'})}
+ await saveBlob(name+'.'+ext,blob)}
+// ---- الإعدادات
+function wilSel(){const cur=D.set.wilaya||'',has=DZ.some(w=>w[1]==cur);
+ return`<select style="width:100%" onchange="setWil(this.value)"><option value="">— اختر الولاية —</option>${DZ.map(w=>`<option value="${w[1]}" ${w[1]==cur?'selected':''}>${w[0]} - ${w[1]}</option>`).join('')}${cur&&!has?`<option selected>${esc(cur)}</option>`:''}</select>`}
+function comSel(){const w=DZ.find(x=>x[1]==D.set.wilaya),cur=D.set.baladiya||'';
+ if(!w)return`<select style="width:100%" disabled><option>اختر الولاية أولاً</option>${cur?`<option selected>${esc(cur)}</option>`:''}</select>`;
+ return`<select style="width:100%" onchange="D.set.baladiya=this.value;save()"><option value="">— اختر البلدية —</option>${w[2].map(c=>`<option ${c==cur?'selected':''}>${esc(c)}</option>`).join('')}${cur&&!w[2].includes(cur)?`<option selected>${esc(cur)}</option>`:''}</select>`}
+function setWil(v){D.set.wilaya=v;D.set.baladiya='';save();R()}
 function v0(){
  const f=[['year','السنة الدراسية'],['school','اسم المؤسسة'],['wilaya','الولاية'],['baladiya','البلدية'],['dir','المدير'],['nad','الناظر'],['ma','المشرف العام'],['mr','المشرف الرئيسي'],['mt','مشرف التربية']];
- $('#m').innerHTML=`<div class="card"><div class="g">${f.map(([k,l])=>`<div><label>${l}</label><input style="width:100%" value="${esc(D.set[k])}" onchange="D.set['${k}']=this.value;save()"></div>`).join('')}</div></div>
+ $('#m').innerHTML=`<div class="card"><div class="g">${f.map(([k,l])=>`<div><label>${l}</label>${k=='wilaya'?wilSel():k=='baladiya'?comSel():`<input style="width:100%" value="${esc(D.set[k])}" onchange="D.set['${k}']=this.value;save()">`}</div>`).join('')}</div></div>
  <div class="card"><b>الفصول</b>${D.terms.map((t,i)=>`<div class="r">${t.n}: من <input type="date" value="${t.a}" onchange="D.terms[${i}].a=this.value;save()"> إلى <input type="date" value="${t.b}" onchange="D.terms[${i}].b=this.value;save()"></div>`).join('')}</div>
  <div class="card"><b>العطل</b>${D.hol.map((h,i)=>`<div class="r"><input placeholder="اسم العطلة" value="${esc(h.n)}" onchange="D.hol[${i}].n=this.value;save()"> من <input type="date" value="${h.a}" onchange="D.hol[${i}].a=this.value;save()"> إلى <input type="date" value="${h.b}" onchange="D.hol[${i}].b=this.value;save()"><button onclick="D.hol.splice(${i},1);save();R()">✕</button></div>`).join('')}<button onclick="D.hol.push({n:'',a:'',b:''});save();R()">+ عطلة</button></div>
- <div class="card"><b>السيرفر المحلي والمزامنة بين الأجهزة</b><p id="sy" style="font-size:13px">${msg}</p><p>الحساب: ${esc(user&&user.username||'')}</p><div class="r"><button onclick="pull().catch(e=>alert(e.message))">تحديث من السيرفر</button><button onclick="api('/api/backup',{method:'POST',body:'{}'}).then(x=>alert('تم إنشاء النسخة: '+x.name)).catch(e=>alert(e.message))">نسخة احتياطية على السيرفر</button><button onclick="logout()">تسجيل الخروج</button></div><small>تُحفظ البيانات على الجهاز الرئيسي، وتُزامَن الأجهزة المتصلة بالشبكة المحلية كل 3 ثوانٍ.</small></div>
- <div class="card"><b>عتبات الإشعارات (ساعات الغياب)</b><div class="r">إشعار أول: <input type="number" style="width:70px" value="${D.th[0]}" onchange="D.th[0]=+this.value;save()"> إنذار: <input type="number" style="width:70px" value="${D.th[1]}" onchange="D.th[1]=+this.value;save()"> استدعاء الولي: <input type="number" style="width:70px" value="${D.th[2]}" onchange="D.th[2]=+this.value;save()"></div></div>
- <div class="card"><b>نسخة احتياطية</b><div class="r"><button onclick="bk()">تصدير</button><input type="file" accept=".json" onchange="rs(this)"></div></div>`}
-function bk(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D)]));a.download='absences-backup.json';a.click()}
-function rs(i){const f=i.files[0];if(!f)return;f.text().then(t=>{D=JSON.parse(t);save();R()})}
+ <div class="card"><b>عتبات الإشعارات (أيام الغياب المتتالية غير المبرر)</b><div class="r">إشعار أول: <input type="number" style="width:70px" value="${D.cdTh[0]}" onchange="D.cdTh[0]=+this.value;save()"> إشعار ثاني: <input type="number" style="width:70px" value="${D.cdTh[1]}" onchange="D.cdTh[1]=+this.value;save()"> إشعار مضمون: <input type="number" style="width:70px" value="${D.cdTh[2]}" onchange="D.cdTh[2]=+this.value;save()"> فصل: <input type="number" style="width:70px" value="${D.cdTh[3]}" onchange="D.cdTh[3]=+this.value;save()"> يومًا</div>
+ <div class="r"><label style="margin:0"><input type="checkbox" ${D.cdWk?'checked':''} onchange="D.cdWk=this.checked;save()"> احتساب أيام العطلة الأسبوعية والعطل الواقعة بين يومي غياب ضمن التسلسل (مثل الجمعة والسبت)</label></div>
+ <div class="r">كل <input type="number" min="1" style="width:70px" value="${D.lr}" onchange="D.lr=Math.max(1,+this.value||3);save()"> تأخرات = ساعة غياب غير مبررة واحدة (للإحصاءات فقط)</div><small>ضع 0 لتعطيل عتبة. يُصفَّر التسلسل بتبرير الغياب (شهادة طبية أو غيره) أو بحضور الولي أو بعودة التلميذ إلى الدراسة. أصحاب الشهادات الطبية السارية لا تصلهم إشعارات.</small></div>
+ <div class="card"><b>السيرفر المحلي والمزامنة بين الأجهزة</b><p id="sy" style="font-size:13px">${msg}</p><p>الحساب: ${esc(user&&user.username||'')}</p><div class="r"><button onclick="pull().catch(e=>alert(e.message))">تحديث من السيرفر</button><button onclick="api('/api/backup',{method:'POST',body:'{}'}).then(x=>{alert('تم إنشاء النسخة: '+x.name);listBk()}).catch(e=>alert(e.message))">نسخة احتياطية الآن</button><button onclick="listBk()">عرض النسخ الاحتياطية</button><button onclick="logout()">تسجيل الخروج</button></div><div id="bkl"></div><small>تُحفظ البيانات على الجهاز الرئيسي، وتُزامَن الأجهزة المتصلة بالشبكة المحلية كل 3 ثوانٍ. ينشئ السيرفر نسخة احتياطية تلقائيًا مرة كل 24 ساعة (يحتفظ بآخر 30 نسخة).</small></div>
+ <div class="card"><b>نسخة احتياطية يدوية (ملف)</b><div class="r"><button onclick="bk()">تصدير</button><input type="file" accept=".json" onchange="rs(this)"></div></div>`}
+async function listBk(){const e=$('#bkl');if(!e)return;try{const r=await api('/api/backups');e.innerHTML=r.backups.length?`<div class="t"><table><tr><th>النسخة</th><th>التاريخ</th><th></th></tr>${r.backups.map(x=>`<tr><td style="direction:ltr">${esc(x.name)}</td><td>${new Date(x.time).toLocaleString()}</td><td><button onclick="restoreBk('${esc(x.name)}')">استرجاع</button></td></tr>`).join('')}</table></div>`:'<p>لا توجد نسخ بعد.</p>'}catch(er){e.innerHTML='<p style="color:var(--red)">'+esc(er.message)+'</p>'}}
+async function restoreBk(n){if(!confirm('استرجاع هذه النسخة سيستبدل البيانات الحالية (تُنشأ نسخة أمان قبل ذلك). متابعة؟'))return;try{await api('/api/restore',{method:'POST',body:JSON.stringify({name:n})});await pull();alert('تم الاسترجاع')}catch(e){alert(e.message)}}
+function bk(){saveBlob('absences-backup.json',new Blob([JSON.stringify(D)],{type:'application/json'}))}
+function rs(i){const f=i.files[0];if(!f)return;f.text().then(t=>{D=Object.assign(mk(),JSON.parse(t));norm();save();R()})}
+// ---- الأقسام والتلاميذ
 const X=['علوم تجريبية','رياضيات','تقني رياضي (هندسة ميكانيكية)','تقني رياضي (هندسة كهربائية)','تقني رياضي (هندسة مدنية)','تقني رياضي (هندسة الطرائق)','تسيير واقتصاد','آداب وفلسفة','لغات أجنبية'];
 const SP={1:['جذع مشترك علوم وتكنولوجيا','جذع مشترك آداب'],2:X,3:X};
 const FL=[['sn','الرقم المدرسي'],['l','اللقب'],['p','الاسم'],['bd','تاريخ الميلاد','date'],['bp','مكان الميلاد'],['ph','هاتف الولي'],['ad','العنوان']];
 function fillSp(){$('#gs').innerHTML=SP[$('#gl').value].map(x=>`<option>${x}</option>`).join('')}
-function gen(){const l=$('#gl').value,sp=$('#gs').value,n=+$('#gn').value||1;for(let k=1;k<=n;k++){const c=`${l} ثانوي ${sp} ${k}`;if(!D.cls.includes(c))D.cls.push(c)}S.cls=D.cls[D.cls.length-1];save();R()}
-function genAll(){const n=+$('#gn').value||1;[1,2,3].forEach(l=>SP[l].forEach(sp=>{for(let k=1;k<=n;k++){const c=`${l} ثانوي ${sp} ${k}`;if(!D.cls.includes(c))D.cls.push(c)}}));save();R()}
+function gen(){const l=$('#gl').value,sp=$('#gs').value,n=+$('#gn').value||1;for(let k=1;k<=n;k++){const c=`${l} ثانوي ${sp} ${k}`;addCls(c)}S.cls=D.cls[D.cls.length-1];save();R()}
+function genAll(){const n=+$('#gn').value||1;[1,2,3].forEach(l=>SP[l].forEach(sp=>{for(let k=1;k<=n;k++){const c=`${l} ثانوي ${sp} ${k}`;addCls(c)}}));save();R()}
 function addSt(){const o={id:'s'+Date.now(),c:S.cls};FL.forEach(([k])=>o[k]=$('#f_'+k).value.trim());if(!o.l&&!o.p||!S.cls)return;o.n=(o.l+' '+o.p).trim();D.st.push(o);save();R()}
+function moveSt(id,c){const s=D.st.find(x=>x.id==id);if(s&&c){s.c=c;save();R()}}
+function statSt(id,v){const s=D.st.find(x=>x.id==id);if(s){if(v)s.x=v;else delete s.x;save();R()}}
+function doSearch(v){S.q=v;clearTimeout(window._qt);window._qt=setTimeout(()=>{R();const e=$('#q');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}},300)}
 function v1(){
- const L=D.st.filter(s=>!S.cls||s.c==S.cls);
+ const q=S.q.trim().toLowerCase();
+ const L=(q?D.st.filter(s=>[s.n,s.sn,s.ph].some(v=>String(v||'').toLowerCase().includes(q))):D.st.filter(s=>!S.cls||s.c==S.cls)).filter(s=>s.x!='مفصول');
  $('#m').innerHTML=`<div class="card"><b>إنشاء الأقسام حسب المستوى والتخصص</b><div class="r"><select id="gl" onchange="fillSp()"><option value="1">1 ثانوي</option><option value="2">2 ثانوي</option><option value="3">3 ثانوي</option></select><select id="gs">${SP[1].map(x=>`<option>${x}</option>`).join('')}</select>عدد الأفواج <input id="gn" type="number" value="1" min="1" style="width:60px"><button class="p" onclick="gen()">إنشاء</button><button onclick="genAll()">كل التخصصات</button></div>
- <div class="r"><input id="nc" placeholder="قسم يدوي"><button onclick="if(nc.value){D.cls.push(nc.value);S.cls=nc.value;save();R()}">+ قسم</button> القسم: ${clsSel(false)}<button onclick="if(confirm('حذف القسم وتلاميذه؟')){D.st=D.st.filter(s=>s.c!=S.cls);D.cls=D.cls.filter(c=>c!=S.cls);S.cls='';save();R()}">حذف</button></div></div>
- <div class="card"><b>استيراد من Excel</b><p style="font-size:13px">الأعمدة بالترتيب: A الرقم المدرسي، B اللقب، C الاسم، D تاريخ الميلاد، E مكان الميلاد، F هاتف الولي، G العنوان، H القسم (اختياري). السطر الأول عنوان.</p><input type="file" accept=".xlsx,.xls,.csv" onchange="imp(this)"></div>
- <div class="card"><div class="g">${FL.map(([k,l,t])=>`<input id="f_${k}" type="${t||'text'}" placeholder="${l}" title="${l}">`).join('')}</div><button class="p" onclick="addSt()" style="margin-top:6px">+ تلميذ في القسم المحدد</button>
- <div class="t"><table><tr><th>#</th>${FL.map(f=>`<th>${f[1]}</th>`).join('')}<th></th></tr>${L.map((s,i)=>`<tr><td>${i+1}</td>${FL.map(([k])=>`<td>${esc(s[k])}</td>`).join('')}<td><button onclick="D.st=D.st.filter(x=>x.id!='${s.id}');save();R()">✕</button></td></tr>`).join('')}</table></div></div>`}
-function imp(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const w=XLSX.read(e.target.result,{type:'array'}),rows=XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true});let n=0;
- const dv=v=>typeof v=='number'?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):String(v||'').trim();
- rows.slice(1).forEach((x,k)=>{const c=String(x[7]||S.cls||'').trim();if(!c||(!x[1]&&!x[2]))return;if(!D.cls.includes(c))D.cls.push(c);const l=String(x[1]||'').trim(),p=String(x[2]||'').trim();D.st.push({id:'s'+Date.now()+'_'+k,sn:String(x[0]||'').trim(),l,p,n:(l+' '+p).trim(),bd:dv(x[3]),bp:String(x[4]||'').trim(),ph:String(x[5]||'').trim(),ad:String(x[6]||'').trim(),c});n++});
- save();alert('تم استيراد '+n+' تلميذ');R()};r.readAsArrayBuffer(f)}
+ <div class="r"><input id="nc" placeholder="قسم يدوي"><button onclick="if(nc.value){addCls(nc.value.trim());S.cls=nc.value.trim();save();R()}">+ قسم</button> القسم: ${clsSel(false)}<button onclick="if(confirm('حذف القسم وتلاميذه؟')){D.st=D.st.filter(s=>s.c!=S.cls);D.cls=D.cls.filter(c=>c!=S.cls);S.cls='';save();R()}">حذف</button></div></div>
+ <div class="card"><b>استيراد من Excel</b><div class="r"><button class="p" onclick="tplXlsx()">⬇ تحميل نموذج Excel فارغ</button><span style="font-size:13px">املأه ثم استورده من هنا</span></div><datalist id="dzl">${DZL.map(x=>`<option value="${x}">`).join('')}</datalist><p style="font-size:13px">الأعمدة بالترتيب: A الرقم المدرسي، B اللقب، C الاسم، D تاريخ الميلاد، E مكان الميلاد، F هاتف الولي، G العنوان، H القسم (اختياري). السطر الأول عنوان.</p><input type="file" accept=".xlsx,.xls,.csv" onchange="imp(this)"></div>
+ <div class="card"><div class="g">${FL.map(([k,l,t])=>`<input id="f_${k}" ${k=='bp'?'list="dzl"':''} type="${t||'text'}" placeholder="${l}" title="${l}">`).join('')}</div><button class="p" onclick="addSt()" style="margin-top:6px">+ تلميذ في القسم المحدد</button>
+ <div class="r" style="margin-top:14px"><input id="q" placeholder="🔍 بحث بالاسم أو الرقم المدرسي أو الهاتف (في كل الأقسام)" value="${esc(S.q)}" oninput="doSearch(this.value)" style="flex:1;min-width:220px"><span>${L.length} تلميذ</span></div>
+ <div class="t"><table><tr><th>#</th>${FL.map(f=>`<th>${f[1]}</th>`).join('')}<th>القسم (تحويل)</th><th>الوضعية</th><th></th></tr>${L.map((s,i)=>`<tr style="${s.x?'opacity:.55':''}"><td>${i+1}</td>${FL.map(([k])=>`<td>${esc(s[k])}</td>`).join('')}<td><select onchange="moveSt('${s.id}',this.value)" style="max-width:190px">${D.cls.map(c=>`<option ${c==s.c?'selected':''}>${esc(c)}</option>`).join('')}</select></td><td><select onchange="statSt('${s.id}',this.value)"><option value="">متمدرس</option><option ${s.x=='محوَّل'?'selected':''}>محوَّل</option><option ${s.x=='منقطع'?'selected':''}>منقطع</option></select></td><td><button onclick="dismissSt('${s.id}')" title="فصل (مجلس تأديبي)">فصل</button> <button onclick="if(confirm('حذف التلميذ نهائيًا من قاعدة البيانات؟ (للفصل استعمل زر فصل)')){D.st=D.st.filter(x=>x.id!='${s.id}');save();R()}">✕</button></td></tr>`).join('')}</table></div><small>التلميذ المحوَّل أو المنقطع يبقى سجله محفوظًا لكنه لا يدخل في التسجيل ولا في الحسابات والتقارير.</small></div>${dismissedCard()}`}
+const xDate=v=>{if(typeof v=='number')return new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10);const s=String(v||'').trim();let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');m=s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');return s};
+const xPh=v=>{let s=String(v==null?'':v).replace(/[\s.\-()]/g,'');if(/^\d{9}$/.test(s)&&/^[567]/.test(s))s='0'+s;return s};
+function imp(i){const f=i.files[0];if(!f)return;loadXLSX().then(()=>{const r=new FileReader();r.onload=e=>{const w=XLSX.read(e.target.result,{type:'array'}),rows=XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true});let n=0,u=0;
+ rows.slice(1).forEach((x,k)=>{const c=String(x[7]||S.cls||'').trim();if(!c||(!x[1]&&!x[2]))return;addCls(c);const l=String(x[1]||'').trim(),p=String(x[2]||'').trim(),sn=String(x[0]||'').trim();
+  const o={sn,l,p,n:(l+' '+p).trim(),bd:xDate(x[3]),bp:String(x[4]||'').trim(),ph:xPh(x[5]),ad:String(x[6]||'').trim()};
+  const old=sn?D.st.find(s=>s.sn==sn):null;
+  if(old){Object.assign(old,o);if(!old.x)old.c=c;u++}else{D.st.push({id:'s'+Date.now()+'_'+k,...o,c});n++}});
+ save();i.value='';alert('تم استيراد '+n+' تلميذ جديد'+(u?' وتحديث '+u+' تلميذ موجود (بنفس الرقم المدرسي)':''));R()};r.readAsArrayBuffer(f)}).catch(e=>alert(e.message))}
+async function tplXlsx(){
+ const hdr=['الرقم المدرسي','اللقب','الاسم','تاريخ الميلاد (YYYY-MM-DD)','مكان الميلاد','هاتف الولي','العنوان','القسم'];
+ try{await loadXLSX();const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
+  const ws=XLSX.utils.aoa_to_sheet([hdr]);ws['!cols']=[14,16,16,24,18,16,30,46].map(w=>({wch:w}));
+  for(let r=2;r<=1001;r++)['A','D','F'].forEach(c=>{ws[c+r]={t:'s',v:'',z:'@'}});ws['!ref']='A1:H1001';
+  XLSX.utils.book_append_sheet(wb,ws,'التلاميذ');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['أسماء الأقسام (انسخ الاسم كما هو إلى عمود القسم)'],...D.cls.map(c=>[c])]),'الأقسام');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['تعليمات'],['1) املأ ورقة «التلاميذ» ابتداءً من السطر الثاني ولا تغيّر ترتيب الأعمدة.'],['2) عمود القسم: اكتب اسم القسم كما في ورقة «الأقسام»؛ أي قسم جديد يُنشأ تلقائيًا.'],['3) تاريخ الميلاد بصيغة 2008-03-15 أو 15/03/2008.'],['4) هاتف الولي: مثال 0550123456.'],['5) في التطبيق: الأقسام والتلاميذ ← استيراد من Excel ← اختر الملف.'],['6) إعادة استيراد نفس الرقم المدرسي تحدّث بيانات التلميذ ولا تكرّره.']]),'تعليمات');
+  await saveBlob('نموذج_التلاميذ.xlsx',new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}))}
+ catch(e){const q=x=>'"'+String(x).replace(/"/g,'""')+'"';await saveBlob('نموذج_التلاميذ.csv',new Blob(['﻿'+hdr.map(q).join(',')+'\n'],{type:'text/csv;charset=utf-8'}))}}
+// ---- الفصل وإعادة الإدماج
+function dismissSt(id,reason){const s=D.st.find(x=>x.id==id);if(!s)return;
+ const r=reason||prompt('سبب الفصل:','قرار المجلس التأديبي');if(r===null||r==='')return;
+ const d=prompt('تاريخ الفصل (YYYY-MM-DD):',today);if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d)){alert('تاريخ غير صالح');return}
+ if(!confirm('فصل التلميذ '+s.n+' من القسم '+s.c+'؟\nيُحذف من قائمة القسم ويبقى سجله محفوظًا ويمكن إعادة إدماجه.'))return;
+ s.x='مفصول';s.xd=d;s.xr=r;s.hist=s.hist||[];s.hist.push({t:'فصل',d,r,c:s.c});save();R()}
+function reint(id){const s=D.st.find(x=>x.id==id),el=document.getElementById('ri_'+id);if(!s||!el)return;
+ if(!confirm('إعادة إدماج '+s.n+' في القسم '+el.value+'؟'))return;
+ s.hist=s.hist||[];s.hist.push({t:'إعادة إدماج',d:today,c:el.value});s.c=el.value;s.rd=today;delete s.x;delete s.xd;delete s.xr;save();R()}
+function dismissedCard(){
+ const q=S.q.trim().toLowerCase(),L=D.st.filter(s=>s.x=='مفصول'&&(!q||[s.n,s.sn,s.ph].some(v=>String(v||'').toLowerCase().includes(q))));
+ return`<div class="card"><b>التلاميذ المفصولون (${L.length})</b> <button onclick="expDis()">تصدير Excel</button><div class="t"><table style="min-width:820px"><tr><th>#</th><th>التلميذ</th><th>الرقم المدرسي</th><th>القسم السابق</th><th>هاتف الولي</th><th>تاريخ الفصل</th><th>سبب الفصل</th><th>إعادة الإدماج</th></tr>${L.map((s,i)=>`<tr><td>${i+1}</td><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.sn)}</td><td>${esc(s.c)}</td><td>${esc(s.ph)}</td><td>${esc(s.xd)}</td><td>${esc(s.xr)}</td><td><select id="ri_${s.id}" style="max-width:170px">${D.cls.map(c=>`<option ${c==s.c?'selected':''}>${esc(c)}</option>`).join('')}</select> <button onclick="reint('${s.id}')">إعادة إدماج</button></td></tr>`).join('')||'<tr><td colspan=8>لا يوجد تلاميذ مفصولون</td></tr>'}</table></div><small>المفصول لا يظهر في قائمة القسم ولا في التسجيل والتقارير، وتبقى بياناته كاملة في قاعدة البيانات.</small></div>`}
+function expDis(){const L=D.st.filter(s=>s.x=='مفصول');exportSheets('التلاميذ_المفصولون',[{n:'المفصولون',rows:[['الرقم المدرسي','اللقب','الاسم','تاريخ الميلاد','مكان الميلاد','هاتف الولي','العنوان','القسم السابق','تاريخ الفصل','سبب الفصل'],...L.map(s=>[s.sn,s.l,s.p,s.bd,s.bp,s.ph,s.ad,s.c,s.xd,s.xr])]}])}
+// ---- استعمال الزمن والأساتذة
+const defTT=()=>({0:[1,2,3,4,5,6,7,8],1:[1,2,3,4,5,6,7,8],2:[1,2,3,4],3:[1,2,3,4,5,6,7,8],4:[1,2,3,4,5,6,7,8]});
+function addCls(c){if(!D.cls.includes(c)){D.cls.push(c)}if(!D.tt[c])D.tt[c]=defTT()}
+const tnm=(c,d,h)=>{const t=D.tc.find(t=>t.id==((D.tp[c]||{})[d+'_'+h]));return t?t.n:''};
+function addTc(){const n=$('#tcn').value.trim();if(!n)return;D.tc.push({id:'t'+Date.now(),n,m:$('#tcm').value.trim()});save();R()}
+function delTc(id){if(!confirm('حذف الأستاذ؟'))return;D.tc=D.tc.filter(t=>t.id!=id);save();R()}
 function v2(){
  const c=S.cls,t=D.tt[c]||{};let tot=0;Object.values(t).forEach(a=>tot+=a.length);
- $('#m').innerHTML=`<div class="card">القسم: ${clsSel(false)} — الحجم الأسبوعي المبرمج: <b>${tot}</b> ساعة
- <div class="t"><table><tr><th></th>${HR.map(h=>`<th>${h}</th>`).join('')}</tr>${[0,1,2,3,4,6].map(d=>`<tr><th>${DAYS[d]}</th>${HR.map(h=>`<td><input type="checkbox" ${(t[d]||[]).includes(h)?'checked':''} onchange="tt(${d},${h},this.checked)"></td>`).join('')}</tr>`).join('')}</table></div></div>`}
-function tt(d,h,v){const c=S.cls;D.tt[c]=D.tt[c]||{};let a=D.tt[c][d]||[];a=v?[...a,h]:a.filter(x=>x!=h);D.tt[c][d]=a.sort((x,y)=>x-y);save();R()}
+ $('#m').innerHTML=`<div class="card"><b>الأساتذة</b><div class="r"><input id="tcn" placeholder="اسم الأستاذ"><input id="tcm" placeholder="المادة"><button class="p" onclick="addTc()">+ أستاذ</button></div>${D.tc.length?`<div class="r">${D.tc.map(t=>`<span style="border:1px solid var(--bd);border-radius:9px;padding:4px 9px">${esc(t.n)}${t.m?' ('+esc(t.m)+')':''} <a href="#" onclick="delTc('${t.id}');return false" style="color:var(--red);text-decoration:none">✕</a></span>`).join('')}</div>`:''}</div>
+ <div class="card">القسم: ${clsSel(false)} — الحجم الأسبوعي المبرمج: <b>${tot}</b> ساعة
+ <div class="t"><table style="min-width:760px"><tr><th></th>${HR.map(h=>`<th>${h}</th>`).join('')}</tr>${[0,1,2,3,4,6].map(d=>`<tr><th>${DAYS[d]}</th>${HR.map(h=>{const on=(t[d]||[]).includes(h),cur=(D.tp[c]||{})[d+'_'+h]||'';return`<td><input type="checkbox" ${on?'checked':''} onchange="tt(${d},${h},this.checked)">${on&&D.tc.length?`<br><select style="width:78px;font-size:11px;padding:3px" onchange="tpSet(${d},${h},this.value)"><option value="">—</option>${D.tc.map(x=>`<option value="${x.id}" ${x.id==cur?'selected':''}>${esc(x.n)}</option>`).join('')}</select>`:''}</td>`}).join('')}</tr>`).join('')}</table></div></div>`}
+function tt(d,h,v){const c=S.cls;D.tt[c]=D.tt[c]||{};let a=D.tt[c][d]||[];if(v&&a.length>=8){alert('الحد الأقصى 8 ساعات دراسة في اليوم');R();return}a=v?[...a,h]:a.filter(x=>x!=h);D.tt[c][d]=a.sort((x,y)=>x-y);if(!v&&D.tp[c])delete D.tp[c][d+'_'+h];save();R()}
+function tpSet(d,h,v){const c=S.cls;D.tp[c]=D.tp[c]||{};if(v)D.tp[c][d+'_'+h]=v;else delete D.tp[c][d+'_'+h];save()}
+// ---- التسجيل اليومي
 function v3(){
- const c=S.cls,d=S.date,sc=sched(c,d),hd=held(c,d),L=D.st.filter(s=>s.c==c);
- $('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(false)} <input type="date" value="${d}" onchange="S.date=this.value;R()"> ${DAYS[dt(d).getDay()]} ${isHol(d)?'<b>(عطلة)</b>':''}</div>
+ const c=S.cls,d=S.date,sc=sched(c,d),hd=held(c,d),L=act().filter(s=>s.c==c),dw=dt(d).getDay();
+ $('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(false)} <input type="date" value="${d}" onchange="S.date=this.value;R()"> ${DAYS[dw]} ${isHol(d)?'<b>(عطلة)</b>':''}</div>
  <div>الساعات المبرمجة: <b>${sc.length}</b> — المدرَّسة فعليا: <b>${hd.length}</b></div>
- <div class="r">ساعات لم تُدرَّس (غياب أستاذ...): ${sc.map(h=>`<button class="h ${hd.includes(h)?'':'a'}" onclick="cx(${h})">${h}</button>`).join('')||'لا توجد ساعات'}</div></div>
- <div class="card t"><table><tr><th>#</th><th>التلميذ</th><th>الساعات الغائب فيها</th><th></th></tr>${L.map((s,i)=>{const a=(D.ab[d]||{})[s.id]||[];return`<tr><td>${i+1}</td><td style="text-align:right">${esc(s.n)}</td><td>${sc.map(h=>`<button class="h ${a.includes(h)?'a':''} ${hd.includes(h)?'':'x'}" onclick="ab('${s.id}',${h})">${h}</button>`).join('')}</td><td><button onclick="abAll('${s.id}',1)">كلي</button> <button onclick="abAll('${s.id}',0)">عودة</button></td></tr>`}).join('')}</table></div>`}
+ <div class="r">ساعات لم تُدرَّس (غياب أستاذ...): ${sc.map(h=>`<button class="h ${hd.includes(h)?'':'a'}" title="${esc(tnm(c,dw,h))}" onclick="cx(${h})">${h}</button>`).join('')||'لا توجد ساعات'}</div>
+ ${sc.some(h=>tnm(c,dw,h))?`<small>${sc.map(h=>tnm(c,dw,h)?h+': '+esc(tnm(c,dw,h)):'').filter(Boolean).join(' — ')}</small>`:''}</div>
+ <div class="card t"><table style="min-width:720px"><tr><th>#</th><th>التلميذ</th><th>الساعات الغائب فيها</th><th>تأخر</th><th>تبرير الغياب</th><th></th></tr>${L.map((s,i)=>{const a=(D.ab[d]||{})[s.id]||[],has=a.some(h=>hd.includes(h)),j=(D.ju[d]||{})[s.id]||{};return`<tr><td>${i+1}</td><td style="text-align:right">${esc(s.n)}</td><td>${sc.map(h=>`<button class="h ${a.includes(h)?'a':''} ${hd.includes(h)?'':'x'}" onclick="ab('${s.id}',${h})">${h}</button>`).join('')}</td><td><button class="h ${isLate(d,s.id)?'l':''}" title="دخول متأخر" onclick="ltSet('${s.id}')">ت</button></td><td style="text-align:right">${juCell(s.id,d,has,j)}}</td><td><button onclick="abAll('${s.id}',1)">كلي</button> <button onclick="abAll('${s.id}',0)">عودة</button></td></tr>`}).join('')}</table></div>`}
+const EXL={med:'شهادة طبية',oth:'تبرير آخر',parent:'حضور الولي'};
+function juCell(id,d,has,j){if(!has)return'';const e=exOf(d,id);
+ if(e)return`<b style="color:var(--ac)">مبرر — ${EXL[e.t]} (${e.a} → ${e.b})</b>`;
+ return`<select onchange="juSet('${id}','j',this.value)"><option value="">غير مبرر</option><option value="1" ${j.j?'selected':''}>مبرر</option></select>${j.j?`<input placeholder="السبب" value="${esc(j.r)}" onchange="juSet('${id}','r',this.value)" style="width:120px;margin:2px"><input placeholder="رقم الشهادة" value="${esc(j.c)}" onchange="juSet('${id}','c',this.value)" style="width:110px;margin:2px">`:''}`}
 function cx(h){const c=S.cls,d=S.date;D.cx[d]=D.cx[d]||{};let a=D.cx[d][c]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];D.cx[d][c]=a;save();R()}
 function ab(id,h){const d=S.date;D.ab[d]=D.ab[d]||{};let a=D.ab[d][id]||[];a=a.includes(h)?a.filter(x=>x!=h):[...a,h];if(a.length)D.ab[d][id]=a;else delete D.ab[d][id];save();R()}
-function abAll(id,v){const d=S.date;D.ab[d]=D.ab[d]||{};if(v)D.ab[d][id]=[...sched(S.cls,d)];else delete D.ab[d][id];save();R()}
+function abAll(id,v){const d=S.date;D.ab[d]=D.ab[d]||{};if(v)D.ab[d][id]=[...sched(S.cls,d)];else{delete D.ab[d][id];if(D.ju[d])delete D.ju[d][id]}save();R()}
+function ltSet(id,d=S.date){D.lt[d]=D.lt[d]||{};if(D.lt[d][id])delete D.lt[d][id];else D.lt[d][id]=1;save();R()}
+function juSet(id,k,v,d=S.date){D.ju[d]=D.ju[d]||{};if(k=='j'){if(v)D.ju[d][id]={...(D.ju[d][id]||{}),j:1};else delete D.ju[d][id];save();R();return}const o=D.ju[d][id];if(o){o[k]=v;save()}}
+// ---- التقارير والإحصاءات
+function tAbs(ds,cl){const r={};ds.forEach(d=>{const x=D.cx[d]||{};for(const c in x){if(!cl.includes(c))continue;const sc=sched(c,d);x[c].forEach(h=>{if(!sc.includes(h))return;const k=tnm(c,dt(d).getDay(),h)||'غير محدد';r[k]=(r[k]||0)+1})}});return Object.entries(r).sort((a,b)=>b[1]-a[1])}
+function repData(){
+ const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls;
+ const cRows=cl.map(c=>{const s=schedN(c,ds),h=heldN(c,ds);return[c,s,h,s-h]});
+ const sRows=act().filter(s=>cl.includes(s.c)).map(s=>[s,absSplit(s.id,s.c,ds)]).filter(x=>x[1].t>0||x[1].l>0).sort((x,y)=>y[1].t-x[1].t);
+ return{a,b,ds,cl,cRows,sRows,tRows:tAbs(ds,cl)}}
 function v4(){
- const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls;
- $('#m').innerHTML=`<div class="card np"><div class="r">الفترة: <select onchange="S.per=this.value;R()">${[['day','يومي'],['week','أسبوعي'],['month','شهري'],['term','فصلي'],['year','سنوي']].map(([k,l])=>`<option value="${k}" ${S.per==k?'selected':''}>${l}</option>`).join('')}</select><input type="date" value="${S.date}" onchange="S.date=this.value;R()">القسم: ${clsSel(true)}<button class="p" onclick="print()">طباعة</button></div></div>
- <div class="card"><b>من ${a} إلى ${b}</b><h4>الساعات المدرَّسة لكل قسم</h4><div class="t"><table><tr><th>القسم</th><th>مبرمجة</th><th>فعلية</th><th>الفرق</th></tr>${cl.map(c=>{const s=schedN(c,ds),h=heldN(c,ds);return`<tr><td>${esc(c)}</td><td>${s}</td><td>${h}</td><td>${s-h}</td></tr>`}).join('')}</table></div>
- <h4>غيابات التلاميذ (بالساعات)</h4><div class="t"><table><tr><th>التلميذ</th><th>القسم</th><th>ساعات الغياب</th></tr>${D.st.filter(s=>cl.includes(s.c)).map(s=>[s,absH(s.id,s.c,ds)]).filter(x=>x[1]>0).sort((x,y)=>y[1]-x[1]).map(([s,n])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td><b>${n}</b></td></tr>`).join('')||'<tr><td colspan=3>لا غيابات</td></tr>'}</table></div></div>`}
+ const{a,b,cRows,sRows,tRows}=repData();
+ $('#m').innerHTML=`<div class="card np"><div class="r">${perBar(true)}<button class="p" onclick="print()">طباعة</button><button onclick="expRep()">تصدير Excel</button></div></div>
+ <div class="card"><b>من ${a} إلى ${b}</b><h4>الساعات المدرَّسة لكل قسم</h4><div class="t"><table><tr><th>القسم</th><th>مبرمجة</th><th>فعلية</th><th>الفرق</th></tr>${cRows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table></div>
+ <h4>غيابات التلاميذ (بالساعات)</h4><div class="t"><table><tr><th>التلميذ</th><th>القسم</th><th>مجموع الغياب</th><th>مبرر</th><th>غير مبرر</th><th>تأخرات</th></tr>${sRows.map(([s,x])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td><b>${x.t}</b></td><td>${x.j}</td><td>${x.u}</td><td>${x.l}</td></tr>`).join('')||'<tr><td colspan=6>لا غيابات</td></tr>'}</table></div>
+ <h4>ساعات غياب الأساتذة (ساعات لم تُدرَّس)</h4><div class="t"><table><tr><th>الأستاذ</th><th>الساعات</th></tr>${tRows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join('')||'<tr><td colspan=2>لا توجد ساعات</td></tr>'}</table></div></div>`}
+function expRep(){const{a,b,cRows,sRows,tRows}=repData();exportSheets(`تقرير_${a}_${b}`,[{n:'الأقسام',rows:[['القسم','مبرمجة','فعلية','الفرق'],...cRows]},{n:'التلاميذ',rows:[['التلميذ','القسم','مجموع الغياب','مبرر','غير مبرر','تأخرات'],...sRows.map(([s,x])=>[s.n,s.c,x.t,x.j,x.u,x.l])]},{n:'الأساتذة',rows:[['الأستاذ','الساعات'],...tRows]}])}
+function vH(){
+ const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls,A=act().filter(s=>cl.includes(s.c)),sm={};A.forEach(s=>sm[s.id]=s);
+ let T=0,J=0,Lt=0;const wd=[0,0,0,0,0,0,0],per={},cr={};
+ ds.forEach(d=>{const ab=D.ab[d]||{};for(const id in ab){const s=sm[id];if(!s)continue;const hh=held(s.c,d),k=ab[id].filter(h=>hh.includes(h)).length;if(!k)continue;T+=k;if(jus(d,id))J+=k;wd[dt(d).getDay()]+=k;per[id]=(per[id]||0)+k;cr[s.c]=(cr[s.c]||0)+k}const lt=D.lt[d]||{};for(const id in lt){const s=sm[id];if(s&&sched(s.c,d).length)Lt++}});
+ let pos=0;const crow=cl.map(c=>{const n=A.filter(s=>s.c==c).length,H=heldN(c,ds),tot=n*H;pos+=tot;const ab=cr[c]||0;return{c,n,H,ab,p:tot?ab/tot*100:0}}).sort((x,y)=>y.p-x.p);
+ const rate=pos?((pos-T)/pos*100).toFixed(1):'—';
+ const nn=[0,0,0,0,0];A.forEach(s=>nn[stat(s,ds).lv]++);
+ const top=Object.entries(per).sort((x,y)=>y[1]-x[1]).slice(0,10),wmax=Math.max(1,...wd),ta=tAbs(ds,cl);
+ $('#m').innerHTML=`<div class="card np"><div class="r">${perBar(true)}</div><b>${a} → ${b}</b></div>
+ <div class="card"><div class="k"><div><b>${A.length}</b><span>تلميذ متمدرس</span></div><div><b>${T}</b><span>ساعات الغياب</span></div><div><b>${T-J}</b><span>غير مبررة</span></div><div><b>${J}</b><span>مبررة</span></div><div><b>${Lt}</b><span>تأخرات</span></div><div><b>${rate}${rate=='—'?'':'%'}</b><span>نسبة الحضور</span></div><div><b>${nn[1]+nn[2]+nn[3]+nn[4]}</b><span>حالات تستوجب إشعارًا</span></div></div>
+ ${nn[1]+nn[2]+nn[3]+nn[4]?`<p style="margin-bottom:0">إشعار أول: <b>${nn[1]}</b> — إشعار ثاني: <b>${nn[2]}</b> — إشعار مضمون: <b>${nn[3]}</b> — فصل: <b>${nn[4]}</b> <button onclick="tab=7;R()">فتح الإشعارات</button></p>`:''}</div>
+ <div class="card"><b>أكثر 10 تلاميذ غيابًا (ساعات)</b><div class="t"><table><tr><th>#</th><th>التلميذ</th><th>القسم</th><th>الساعات</th></tr>${top.map(([id,n],i)=>`<tr><td>${i+1}</td><td style="text-align:right">${esc(sm[id].n)}</td><td>${esc(sm[id].c)}</td><td><b>${n}</b></td></tr>`).join('')||'<tr><td colspan=4>لا غيابات</td></tr>'}</table></div></div>
+ <div class="card"><b>الأقسام حسب نسبة الغياب</b><div class="t"><table><tr><th>القسم</th><th>التلاميذ</th><th>ساعات الغياب</th><th>نسبة الغياب</th></tr>${crow.map(x=>`<tr><td>${esc(x.c)}</td><td>${x.n}</td><td>${x.ab}</td><td><b>${x.p.toFixed(2)}%</b></td></tr>`).join('')||'<tr><td colspan=4>لا توجد أقسام</td></tr>'}</table></div></div>
+ <div class="card"><b>توزيع الغياب على أيام الأسبوع</b>${[0,1,2,3,4,6].map(d=>`<div class="r" style="flex-wrap:nowrap"><span style="min-width:70px">${DAYS[d]}</span><div style="flex:1"><div class="bar" style="width:${Math.max(wd[d]/wmax*100,wd[d]?2:0)}%"></div></div><b style="min-width:36px">${wd[d]}</b></div>`).join('')}</div>
+ ${ta.length?`<div class="card"><b>ساعات غياب الأساتذة (لم تُدرَّس)</b><div class="t"><table><tr><th>الأستاذ</th><th>الساعات</th></tr>${ta.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join('')}</table></div></div>`:''}`}
+// ---- الكشف الشهري
 function head(){const s=D.set;return`<div style="text-align:center"><b>${esc(s.school)}</b> — ${esc(s.baladiya)} / ${esc(s.wilaya)}<br>السنة الدراسية: ${esc(s.year)}</div>`}
-function toggleDayAbs(id,date){const c=S.cls,hs=sched(c,date),old=(D.ab[date]||{})[id]||[],allAbsent=hs.length>0&&hs.every(h=>old.includes(h));D.ab[date]=D.ab[date]||{};if(allAbsent)delete D.ab[date][id];else D.ab[date][id]=[...new Set([...old,...hs])];save();R()}
+function cellClick(id,d){
+ if(S.mm=='late'){if(sched(S.cls,d).length)ltSet(id,d);return}
+ if(S.mm=='jus'){const hh=held(S.cls,d),a=(D.ab[d]||{})[id]||[];if(!a.some(h=>hh.includes(h)))return;juSet(id,'j',jus(d,id)?'':'1',d);return}
+ toggleDayAbs(id,d)}
+function toggleDayAbs(id,date){const c=S.cls,hs=sched(c,date),old=(D.ab[date]||{})[id]||[],allAbsent=hs.length>0&&hs.every(h=>old.includes(h));D.ab[date]=D.ab[date]||{};if(allAbsent){delete D.ab[date][id];if(D.ju[date])delete D.ju[date][id]}else D.ab[date][id]=[...new Set([...old,...hs])];save();R()}
+function monData(){
+ const c=S.cls,m=S.mon,[y,mo]=m.split('-').map(Number),n=new Date(y,mo,0).getDate(),ds=rng(m+'-01',m+'-'+String(n).padStart(2,'0')),L=act().filter(s=>s.c==c);
+ const H=heldN(c,ds);let tab_=0,jt=0,lt=0;
+ const rows=L.map(s=>{let sum=0,sj=0,sl=0;const cells=ds.map(d=>{const a=(D.ab[d]||{})[s.id]||[],hh=held(c,d),k=a.filter(h=>hh.includes(h)).length,sc=sched(c,d).length,j=jus(d,s.id),late=isLate(d,s.id)&&sc>0;sum+=k;if(j)sj+=k;if(late&&!k)sl++;const kind=k?(j?'jus':'absent'):late?'late':'';return{d,k,kind,t:k?(j?'م':'غ'):late?'ت':(sc?'✓':'—')}});tab_+=sum;jt+=sj;lt+=sl;return{s,cells,sum,sj,sl}});
+ return{c,m,ds,L,H,rows,ab_:tab_,jt,lt,tot:L.length*H}}
 function v5(){
- const c=S.cls,m=S.mon,[y,mo]=m.split('-').map(Number),n=new Date(y,mo,0).getDate(),ds=rng(m+'-01',m+'-'+String(n).padStart(2,'0')),L=D.st.filter(s=>s.c==c);
- const H=heldN(c,ds),tot=L.length*H;let ab_=0;
- const rows=L.map((s,i)=>{let sum=0;const cells=ds.map(d=>{const a=(D.ab[d]||{})[s.id]||[],hh=held(c,d),k=a.filter(h=>hh.includes(h)).length;sum+=k;const absent=k>0;return`<td class="daycell ${absent?'absent':''}" title="${d}: ${absent?'غائب '+k+' ساعة':'لا يوجد غياب مسجل'}" onclick="toggleDayAbs('${s.id}','${d}')">${absent?'غ':(sched(c,d).length?'✓':'—')}</td>`}).join('');ab_+=sum;return`<tr><td>${i+1}</td><td style="text-align:right;white-space:nowrap">${esc(s.n)}</td>${cells}<td><b>${sum}</b></td></tr>`}).join('');
+ const{c,m,ds,H,rows,ab_,jt,lt,tot}=monData();
  const eff=tot-ab_,pa=tot?(eff/tot*100).toFixed(2):'0',pb=tot?(ab_/tot*100).toFixed(2):'0';
- $('#m').innerHTML=`<div class="card np"><div class="r">القسم: ${clsSel(false)}<input type="month" value="${m}" onchange="S.mon=this.value;R()"><button class="p" onclick="print()">طباعة</button></div></div>
- <div class="card">${head()}<h3 style="text-align:center">سجل الحضور والغياب اليومي — القسم ${esc(c)} — شهر ${m}</h3><p style="text-align:center">اضغط على خانة اليوم لتسجيل غياب التلميذ في جميع الحصص المبرمجة. غ = غائب، ✓ = لا يوجد غياب مسجل، — = لا حصص مبرمجة.</p>
- <div class="t"><table><tr><th>#</th><th>الاسم</th>${ds.map(d=>`<th>${+d.slice(8)}</th>`).join('')}<th>المجموع</th></tr>${rows}<tr><td colspan="2">الساعات المدرَّسة</td>${ds.map(d=>`<td>${held(c,d).length||''}</td>`).join('')}<td><b>${H}</b></td></tr></table></div>
- <table style="margin-top:10px;max-width:420px"><tr><td>الحضور الكلي (تلاميذ × ساعات)</td><td>${tot}</td></tr><tr><td>عدد الغيابات</td><td>${ab_}</td></tr><tr><td>الحضور الفعلي</td><td>${eff}</td></tr><tr><td>النسبة % للحضور = (الحضور الفعلي ÷ الحضور الكلي) × 100</td><td><b>${pa}%</b></td></tr><tr><td>النسبة % للغياب</td><td><b>${pb}%</b></td></tr></table>
+ const tr=rows.map(({s,cells,sum,sj,sl},i)=>`<tr><td>${i+1}</td><td style="text-align:right;white-space:nowrap">${esc(s.n)}</td>${cells.map(x=>`<td class="daycell ${x.kind}" title="${x.d}: ${x.k?'غائب '+x.k+' ساعة'+(x.kind=='jus'?' (مبرر)':''):x.kind=='late'?'متأخر':'لا يوجد غياب مسجل'}" onclick="cellClick('${s.id}','${x.d}')">${x.t}</td>`).join('')}<td><b>${sum}</b></td><td>${sj||''}</td><td>${sl||''}</td></tr>`).join('');
+ $('#m').innerHTML=`<div class="card np"><div class="r">القسم: ${clsSel(false)}<input type="month" value="${m}" onchange="S.mon=this.value;R()">الضغط على الخانة يسجّل: <select onchange="S.mm=this.value;R()"><option value="abs" ${S.mm=='abs'?'selected':''}>غياب اليوم</option><option value="late" ${S.mm=='late'?'selected':''}>تأخر</option><option value="jus" ${S.mm=='jus'?'selected':''}>تبرير غياب</option></select><button class="p" onclick="print()">طباعة</button><button onclick="expMon()">تصدير Excel</button></div></div>
+ <div class="card">${head()}<h3 style="text-align:center">سجل الحضور والغياب اليومي — القسم ${esc(c)} — شهر ${m}</h3><p style="text-align:center">غ = غائب، م = غياب مبرر، ت = تأخر، ✓ = لا يوجد غياب مسجل، — = لا حصص مبرمجة.</p>
+ <div class="t"><table><tr><th>#</th><th>الاسم</th>${ds.map(d=>`<th>${+d.slice(8)}</th>`).join('')}<th>المجموع</th><th>مبرر</th><th>تأخر</th></tr>${tr}<tr><td colspan="2">الساعات المدرَّسة</td>${ds.map(d=>`<td>${held(c,d).length||''}</td>`).join('')}<td><b>${H}</b></td><td></td><td></td></tr></table></div>
+ <table style="margin-top:10px;max-width:460px"><tr><td>الحضور الكلي (تلاميذ × ساعات)</td><td>${tot}</td></tr><tr><td>عدد ساعات الغياب</td><td>${ab_}</td></tr><tr><td>منها مبررة / غير مبررة</td><td>${jt} / ${ab_-jt}</td></tr><tr><td>عدد التأخرات</td><td>${lt}</td></tr><tr><td>الحضور الفعلي</td><td>${eff}</td></tr><tr><td>النسبة % للحضور = (الحضور الفعلي ÷ الحضور الكلي) × 100</td><td><b>${pa}%</b></td></tr><tr><td>النسبة % للغياب</td><td><b>${pb}%</b></td></tr></table>
  <div class="sig"><div>المشرف التربوي<br>${esc(D.set.mt)}</div><div>المشرف الرئيسي<br>${esc(D.set.mr)}</div><div>المشرف العام<br>${esc(D.set.ma)}</div><div>الناظر<br>${esc(D.set.nad)}</div><div>المدير<br>${esc(D.set.dir)}</div></div></div>`}
-function lvl(n){return n>=D.th[2]?'استدعاء الولي':n>=D.th[1]?'إنذار':n>=D.th[0]?'إشعار أول':''}
+function expMon(){const{c,m,ds,H,rows}=monData();const hdr=['#','الاسم',...ds.map(d=>+d.slice(8)),'المجموع','مبرر','تأخر'];exportSheets(`كشف_${m}_${c}`,[{n:'الكشف الشهري',rows:[hdr,...rows.map(({s,cells,sum,sj,sl},i)=>[i+1,s.n,...cells.map(x=>x.t),sum,sj,sl]),['','الساعات المدرَّسة',...ds.map(d=>held(c,d).length||''),H,'','']]}])}
+// ---- الإشعارات
+const waNum=p=>{let n=String(p||'').replace(/[^\d+]/g,'');if(n.startsWith('+'))return n.slice(1);if(n.startsWith('00'))return n.slice(2);if(n.startsWith('0'))return '213'+n.slice(1);if(/^[567]\d{8}$/.test(n))return '213'+n;return n};
+function noteBody(k,st){return`تغيّب(ت) عن الدراسة ${st.streak} أيام متتالية دون مبرر (${st.u} ساعة غير مبررة)`}
+function noteAction(k){return k=='فصل'?`وعليه فقد بلغ(ت) غيابه(ا) غير المبرر ${D.cdTh[3]} يومًا متتالية، ويُتخذ في حقه(ا) إجراء الفصل طبقًا للتنظيم المعمول به. وإن كان لديكم مبرر مقبول فاتصلوا بالإدارة فورًا.`:k=='إشعار مضمون'?'هذا إشعار مضمون (إعذار): نستدعيكم للحضور إلى الإدارة فورًا وتقديم مبررات غياب ابنكم(ابنتكم)، وإلا عُرّض(ت) للفصل من المؤسسة طبقًا للتنظيم المعمول به.':k=='إشعار ثاني'?'ننبهكم للمرة الثانية إلى ضرورة التحاق ابنكم(ابنتكم) بالمؤسسة وتقديم مبررات غياباته في أقرب الآجال، وإلا اتُّخذت في حقه(ا) الإجراءات المنصوص عليها في النظام الداخلي.':'نرجو منكم متابعة مواظبته(ا) على الدراسة وتقديم مبررات غياباته.'}
+function noteText(s,st,a,b){const k=LV[st.lv],t=D.set;return`${t.school||''}\n${noteTitle(k)}\nإلى ولي أمر التلميذ(ة): ${s.n} — القسم: ${s.c}\nنعلمكم أنه خلال الفترة من ${a} إلى ${b} ${noteBody(k,st)}.\n${noteAction(k)}\nالمدير ${t.dir||''}`}
+function noteTitle(k){return k=='فصل'?'إشعار بالفصل بسبب الغياب':k+' بخصوص الغياب'}
+function sendNote(id,ch){
+ const s=D.st.find(x=>x.id==id);if(!s)return;const st=stN(s);if(!st.lv)return;
+ const a=st.start,b=asOfDate(),k=LV[st.lv],t=D.set;
+ let num='';if(ch=='wa'||ch=='sms'){num=waNum(s.ph);if(num.length<9){alert('رقم هاتف الولي غير صالح أو غير مسجل');return}}
+ D.nl.push({id:'n'+Date.now(),sid:id,date:today,lv:st.lv,ch,h:st.u,sk:st.streak,a,b,reply:''});save();
+ if(num){const txt=noteText(s,st,a,b);
+  if(ch=='wa')window.open('https://wa.me/'+num+'?text='+encodeURIComponent(txt),'_blank');else location.href='sms:+'+num+'?body='+encodeURIComponent(txt);R();return}
+ const w=window.open('','_blank');if(!w){alert('تعذر فتح نافذة الطباعة');return}
+ w.document.write(`<html dir="rtl"><body style="font-family:Tahoma;padding:30px;line-height:2"><div style="text-align:center"><b>الجمهورية الجزائرية الديمقراطية الشعبية<br>وزارة التربية الوطنية</b><br>ولاية ${esc(t.wilaya)} — بلدية ${esc(t.baladiya)}<br>${esc(t.school)}</div><h2 style="text-align:center"><u>${noteTitle(k)}</u></h2><p>إلى السيد(ة) ولي أمر التلميذ(ة): <b>${esc(s.n)}</b><br>المولود(ة) في: ${esc(s.bd)} بـ ${esc(s.bp)} — الرقم المدرسي: ${esc(s.sn)}<br>القسم: ${esc(s.c)} — العنوان: ${esc(s.ad)} — الهاتف: ${esc(s.ph)}</p><p>نعلمكم أنه خلال الفترة من ${a} إلى ${b} ${esc(noteBody(k,st))}. ${noteAction(k)}</p><p>تحريرا في: ${today}</p><p style="text-align:left;padding-left:40px">المدير<br>${esc(t.dir)}</p><p>توقيع الولي (استلام): ...................</p><script>print()<\/script></body></html>`);w.document.close();R()}
+function nlSet(id,v){const n=D.nl.find(x=>x.id==id);if(n){n.reply=v;save()}}
+function nlDel(id){if(confirm('حذف هذا السجل؟')){D.nl=D.nl.filter(x=>x.id!=id);save();R()}}
+const CHN={print:'طباعة',wa:'واتساب',sms:'SMS'},REPL=['','لم يرد','حضر الولي','اتصل الولي','قدّم تبريرًا'];
 function v6(){
- const [a,b]=period(),ds=rng(a,b),cl=S.cls?[S.cls]:D.cls;
- const L=D.st.filter(s=>cl.includes(s.c)).map(s=>[s,absH(s.id,s.c,ds)]).filter(x=>lvl(x[1])).sort((x,y)=>y[1]-x[1]);
- $('#m').innerHTML=`<div class="card"><div class="r">الفترة: <select onchange="S.per=this.value;R()">${[['week','أسبوعي'],['month','شهري'],['term','فصلي'],['year','سنوي']].map(([k,l])=>`<option value="${k}" ${S.per==k?'selected':''}>${l}</option>`).join('')}</select><input type="date" value="${S.date}" onchange="S.date=this.value;R()">القسم: ${clsSel(true)}</div><b>${a} → ${b}</b> (العتبات: ${D.th.join(' / ')} ساعة)
- <div class="t"><table><tr><th>التلميذ</th><th>القسم</th><th>الساعات</th><th>الإجراء</th><th></th></tr>${L.map(([s,n])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td>${n}</td><td>${lvl(n)}</td><td><button onclick="pn('${s.id}',${n})">طباعة</button></td></tr>`).join('')||'<tr><td colspan=5>لا توجد حالات</td></tr>'}</table></div></div>`}
-function pn(id,n){const s=D.st.find(x=>x.id==id),[a,b]=period(),t=D.set,k=lvl(n),body=k=='استدعاء الولي'?'نستدعيكم للحضور إلى الإدارة في أقرب الآجال لتبرير غيابات ابنكم(ابنتكم) ومتابعة وضعيته الدراسية.':k=='إنذار'?'ننذركم بضرورة مواظبة ابنكم(ابنتكم) على الدراسة وتقديم مبررات غياباته، وإلا اتُّخذت في حقه الإجراءات المنصوص عليها في النظام الداخلي.':'نرجو منكم متابعة مواظبته على الدراسة وتقديم مبررات غياباته.';
- const w=window.open('','_blank');w.document.write(`<html dir="rtl"><body style="font-family:Tahoma;padding:30px;line-height:2"><div style="text-align:center"><b>الجمهورية الجزائرية الديمقراطية الشعبية<br>وزارة التربية الوطنية</b><br>ولاية ${esc(t.wilaya)} — بلدية ${esc(t.baladiya)}<br>${esc(t.school)}</div><h2 style="text-align:center"><u>${k} بخصوص الغياب</u></h2><p>إلى السيد(ة) ولي أمر التلميذ(ة): <b>${esc(s.n)}</b><br>المولود(ة) في: ${esc(s.bd)} بـ ${esc(s.bp)} — الرقم المدرسي: ${esc(s.sn)}<br>القسم: ${esc(s.c)} — العنوان: ${esc(s.ad)} — الهاتف: ${esc(s.ph)}</p><p>نعلمكم أن ابنكم(ابنتكم) قد تغيب(ت) <b>${n}</b> ساعة خلال الفترة من ${a} إلى ${b}. ${body}</p><p>تحريرا في: ${today}</p><p style="text-align:left;padding-left:40px">المدير<br>${esc(t.dir)}</p><p>توقيع الولي (استلام): ...................</p><script>print()<\/script></body></html>`);w.document.close()}
-initServer();
+ const cl=S.cls?[S.cls]:D.cls,asOf=asOfDate();
+ const L=act().filter(s=>cl.includes(s.c)).map(s=>[s,stN(s)]).filter(x=>x[1].lv).map(([s,x])=>{const pv=D.nl.filter(n=>n.sid==s.id&&n.date>=x.start),mx=Math.max(0,...pv.map(n=>n.lv));return[s,x,pv,mx>=x.lv]}).filter(r=>!(S.hs&&r[3])).sort((x,y)=>y[1].lv-x[1].lv||y[1].streak-x[1].streak);
+ const sm={};D.st.forEach(s=>sm[s.id]=s);
+ const log=D.nl.filter(n=>sm[n.sid]&&cl.includes(sm[n.sid].c)).slice().reverse();
+ $('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(true)} محسوب حتى تاريخ: <input type="date" value="${asOf}" onchange="S.asof=this.value;R()"><button onclick="S.asof='';R()">آخر يوم مسجَّل</button><label style="margin:0"><input type="checkbox" ${S.hs?'checked':''} onchange="S.hs=this.checked;R()"> إخفاء من أُرسل له المستوى الحالي</label></div>
+ <small>عتبات الأيام المتتالية غير المبررة: إشعار أول ${D.cdTh[0]} — ثاني ${D.cdTh[1]} — مضمون ${D.cdTh[2]} — فصل ${D.cdTh[3]}. التلميذ المبرَّر بشهادة طبية سارية لا يظهر هنا؛ وحضور الولي يصفّر العدّاد.</small>
+ <div class="t"><table style="min-width:980px"><tr><th>التلميذ</th><th>القسم</th><th>أيام متتالية</th><th>منذ</th><th>ساعات غير مبررة</th><th>المستوى</th><th>الإشعارات</th><th>إجراءات</th></tr>${L.map(([s,x,pv,sent])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td><td><b>${x.streak}</b></td><td>${x.start}</td><td>${x.u}</td><td><b>${LV[x.lv]}</b></td><td>${sent?'✔ أُرسل ('+pv.length+')':pv.length?pv.length+' (أدنى من المستوى)':'—'}</td><td style="white-space:nowrap"><button onclick="sendNote('${s.id}','print')">طباعة</button> <button onclick="sendNote('${s.id}','wa')" ${s.ph?'':'disabled'}>واتساب</button> <button onclick="sendNote('${s.id}','sms')" ${s.ph?'':'disabled'}>SMS</button> <button onclick="parentCame('${s.id}')">حضر الولي</button> <button onclick="goEx('${s.id}')">تبرير</button>${x.lv>=4?` <button class="p" onclick="dismissSt('${s.id}','غياب ${D.cdTh[3]} يومًا متتالية')">تنفيذ الفصل</button>`:''}</td></tr>`).join('')||'<tr><td colspan=8>لا توجد حالات</td></tr>'}</table></div></div>
+ <div class="card"><b>سجل الإشعارات المرسلة</b><div class="t"><table style="min-width:760px"><tr><th>التاريخ</th><th>التلميذ</th><th>القسم</th><th>المستوى</th><th>الوسيلة</th><th>الفترة</th><th>رد الولي</th><th></th></tr>${log.map(n=>`<tr><td>${n.date}</td><td style="text-align:right">${esc(sm[n.sid].n)}</td><td>${esc(sm[n.sid].c)}</td><td>${LV[n.lv]||''}</td><td>${CHN[n.ch]||''}</td><td><small>${n.a} → ${n.b}</small></td><td><select onchange="nlSet('${n.id}',this.value)">${REPL.map(r=>`<option value="${r}" ${r==n.reply?'selected':''}>${r||'— بدون رد —'}</option>`).join('')}</select></td><td><button onclick="nlDel('${n.id}')">✕</button></td></tr>`).join('')||'<tr><td colspan=8>لا توجد إشعارات مسجلة</td></tr>'}</table></div></div>`}
+// ---- التبريرات (شهادات طبية، حضور الولي)
+function addEx(){const sid=$('#exs').value,ty=$('#ext').value,a=$('#exa').value,b=$('#exb').value||a,n=$('#exn').value.trim();
+ if(!sid||!a){alert('اختر التلميذ والتاريخ');return}if(ty!='parent'&&b<a){alert('تاريخ النهاية قبل تاريخ البداية');return}
+ D.ex.push({id:'e'+Date.now(),sid,t:ty,a,b:ty=='parent'?a:b,n});save();R()}
+function goEx(id){const s=D.st.find(x=>x.id==id);if(s)S.cls=s.c;S.exs=id;tab=8;R()}
+function parentCame(id){const s=D.st.find(x=>x.id==id);if(!s||!confirm('تسجيل حضور ولي التلميذ '+s.n+' اليوم؟ يُصفَّر بذلك عدّاد الأيام المتتالية.'))return;D.ex.push({id:'e'+Date.now(),sid:id,t:'parent',a:today,b:today,n:''});save();R()}
+function exType(){const p=$('#ext').value=='parent';$('#exbw').style.display=p?'none':'';$('#exal').textContent=p?'تاريخ الحضور:':'من:'}
+function vE(){
+ const c=S.cls,L=act().filter(s=>s.c==c),sm={};D.st.forEach(s=>sm[s.id]=s);
+ const sel=L.some(s=>s.id==S.exs)?S.exs:(L[0]||{}).id;
+ const rows=D.ex.slice().sort((x,y)=>y.a.localeCompare(x.a)).filter(e=>sm[e.sid]&&(S.exall||(e.t!='parent'&&e.a<=today&&today<=e.b)));
+ $('#m').innerHTML=`<div class="card"><b>تسجيل تبرير أو حضور ولي</b><p style="font-size:13px;margin:6px 0">الشهادة الطبية أو التبرير بفترة (شهر، شهرين، ستة أشهر...) يجعل غيابات الفترة «مبررة» ولا يُرسَل للتلميذ أي إشعار. حضور الولي يصفّر عدّاد الأيام المتتالية.</p>
+ <div class="r">القسم: ${clsSel(false)} التلميذ: <select id="exs">${L.map(s=>`<option value="${s.id}" ${s.id==sel?'selected':''}>${esc(s.n)}</option>`).join('')||'<option value="">لا يوجد تلاميذ</option>'}</select></div>
+ <div class="r">النوع: <select id="ext" onchange="exType()"><option value="med">شهادة طبية (فترة)</option><option value="oth">تبرير آخر (فترة)</option><option value="parent">حضور الولي</option></select> <span id="exal">من:</span> <input type="date" id="exa" value="${today}"> <span id="exbw">إلى: <input type="date" id="exb" value="${today}"></span> <input id="exn" placeholder="ملاحظة / رقم الشهادة" style="min-width:180px"> <button class="p" onclick="addEx()">+ تسجيل</button></div></div>
+ <div class="card"><div class="r"><b>السجل</b> <label style="margin:0"><input type="checkbox" ${S.exall?'checked':''} onchange="S.exall=this.checked;R()"> عرض كل السجلات (وليس الشهادات السارية اليوم فقط)</label></div>
+ <div class="t"><table style="min-width:760px"><tr><th>التلميذ</th><th>القسم</th><th>النوع</th><th>من</th><th>إلى</th><th>ملاحظة</th><th>الحالة</th><th></th></tr>${rows.map(e=>{const s=sm[e.sid],st=e.t=='parent'?'—':e.b<today?'منتهية':e.a>today?'قادمة':'سارية';return`<tr><td style="text-align:right">${esc(s.n)}${s.x=='مفصول'?' <small>(مفصول)</small>':''}</td><td>${esc(s.c)}</td><td>${EXL[e.t]}</td><td>${e.a}</td><td>${e.t=='parent'?'—':e.b}</td><td>${esc(e.n)}</td><td>${st}</td><td><button onclick="if(confirm('حذف هذا السجل؟')){D.ex=D.ex.filter(x=>x.id!='${e.id}');save();R()}">✕</button></td></tr>`}).join('')||'<tr><td colspan=8>لا توجد سجلات</td></tr>'}</table></div></div>`}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const withTimeout=(p,ms)=>Promise.race([Promise.resolve(p),wait(ms).then(()=>{throw new Error('timeout')})]);
+function renderLoading(t){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML='<div class="card" style="max-width:520px;margin:12vh auto;text-align:center"><h2 style="color:var(--ac);margin-top:0">تسيير غيابات التلاميذ</h2><p id="ld">'+t+'</p></div>'}
+function renderFatal(e){document.querySelector('#nav').innerHTML='';document.querySelector('#m').innerHTML='<div class="card" style="max-width:520px;margin:8vh auto"><h2 style="color:var(--red);margin-top:0">تعذر تشغيل السيرفر المدمج</h2><p>'+esc(e)+'</p><div class="r"><button class="p" onclick="boot()">إعادة المحاولة</button></div></div>'}
+async function startEmbeddedAndroidServer(){
+  const cap=window.Capacitor;
+  if(!(cap&&cap.isNativePlatform&&cap.isNativePlatform())) return;
+  const ping=async()=>{try{const r=await withTimeout(fetch('http://127.0.0.1:8787/api/ping',{cache:'no-store'}),2000);return r.ok}catch(e){return false}};
+  if(await ping()) return;
+  let node=(cap.Plugins||{}).CapacitorNodeJS||(cap.Plugins||{}).NodeJS;
+  if(!node&&cap.registerPlugin){try{node=cap.registerPlugin('CapacitorNodeJS')}catch(e){}}
+  if(!node) throw new Error('إضافة Node.js غير موجودة داخل التطبيق');
+  try{await withTimeout(node.start({}),8000)}catch(e){console.warn('Node start:',e)}
+  const end=Date.now()+25000;
+  while(Date.now()<end){ if(await ping()) return; await wait(500) }
+  throw new Error('لم يبدأ السيرفر المدمج على الهاتف. أغلق التطبيق تمامًا ثم افتحه مجددًا.');
+}
+async function boot(){
+  renderLoading('جارٍ تشغيل السيرفر المحلي...');
+  try{await startEmbeddedAndroidServer()}catch(e){renderFatal(e.message||String(e));return}
+  initServer();
+}
+window.addEventListener('error',e=>{if(!document.querySelector('#m').innerHTML.trim())renderFatal('خطأ: '+e.message)});
+boot();
 </script>
 </body>
 </html>
