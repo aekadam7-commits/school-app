@@ -1,0 +1,12 @@
+node_modules/
+android/
+desktop/dist/
+desktop/server/
+desktop/node_modules/
+build/
+.node-build/
+server/data/
+server/public/
+*.log
+.DS_Store
+Thumbs.db
