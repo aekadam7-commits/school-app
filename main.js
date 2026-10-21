@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -37,6 +37,9 @@ function stopServer() { return new Promise(resolve => { const p = serverProc; if
 function createWindow() {
   win = new BrowserWindow({ width:1280, height:850, minWidth:360, minHeight:540, show:false, title:'تسيير غيابات التلاميذ', backgroundColor:'#f3f6fb', icon:path.join(__dirname,'build','icon.png'), webPreferences:{ contextIsolation:true, nodeIntegration:false } });
   Menu.setApplicationMenu(null);
+  // الروابط الخارجية (واتساب، SMS) تُفتح خارج التطبيق ولا تُنشئ نافذة جديدة
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^(https?|sms|tel|mailto):/i.test(url)) shell.openExternal(url).catch(() => {}); return { action: 'deny' }; });
+  win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(`http://127.0.0.1:${PORT}`) && !url.startsWith('data:')) { e.preventDefault(); if (/^(https?|sms|tel|mailto):/i.test(url)) shell.openExternal(url).catch(() => {}); } });
   win.once('ready-to-show', () => win.show());
   win.webContents.on('console-message', (_e, level, message, line, source) => { if (level >= 2) log(`renderer: ${message} (${source}:${line})`); });
   win.webContents.on('did-fail-load', (_e, code, desc, url) => { log(`did-fail-load ${code} ${desc} ${url}`); if (!win.isDestroyed()) win.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(`<meta charset="utf-8"><body dir="rtl" style="font:16px Tahoma;padding:30px"><h2>تعذر فتح التطبيق</h2><p>${desc}</p><p>راجع سجل التطبيق: ${logFile()}</p></body>`)); });
