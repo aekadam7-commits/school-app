@@ -38,7 +38,7 @@ import android.content.*; import android.os.Build; import com.getcapacitor.*; im
     console.log('Android launcher icons installed');
   }
   const mf=J('android','app','src','main','AndroidManifest.xml'); let m=read(mf);
-  const perms=['android.permission.INTERNET','android.permission.ACCESS_NETWORK_STATE','android.permission.FOREGROUND_SERVICE','android.permission.FOREGROUND_SERVICE_SPECIAL_USE','android.permission.WAKE_LOCK'];
+  const perms=['android.permission.INTERNET','android.permission.ACCESS_NETWORK_STATE','android.permission.FOREGROUND_SERVICE','android.permission.FOREGROUND_SERVICE_SPECIAL_USE','android.permission.WAKE_LOCK','android.permission.CAMERA'];
   const add=perms.filter(p=>!m.includes('"'+p+'"')).map(p=>`    <uses-permission android:name="${p}" />`).join('\n');
   if(add)m=m.replace(/<application/,add+'\n    <application');
   if(!m.includes('usesCleartextTraffic'))m=m.replace(/<application/,'<application android:usesCleartextTraffic="true"');
