@@ -15,6 +15,11 @@ jobs:
         with: 
           node-version: 20
           
+      - name: Inject repo for auto QR
+        run: node tools/inject-repo.js
+        env:
+          REPO: ${{ github.repository }}
+
       - name: Prepare desktop project
         run: node tools/prepare-desktop.js
       
@@ -50,6 +55,11 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
           
+      - name: Inject repo for auto QR
+        run: node tools/inject-repo.js
+        env:
+          REPO: ${{ github.repository }}
+
       - name: Install Capacitor and embedded Node runtime
         run: |
           npm install
