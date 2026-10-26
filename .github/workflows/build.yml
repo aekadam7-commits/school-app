@@ -96,12 +96,34 @@ jobs:
         with: 
           path: out
           
+      - name: Generate QR code for direct APK download
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          pip install "qrcode[pil]"
+          python3 - <<'PY'
+          import os, qrcode
+          url = "https://github.com/%s/releases/latest/download/Ghiyabat.apk" % os.environ["REPO"]
+          qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=14, border=4)
+          qr.add_data(url)
+          qr.make(fit=True)
+          qr.make_image(fill_color="black", back_color="white").save("Ghiyabat-QR.png")
+          print(url)
+          PY
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Ghiyabat Build ${{ github.run_number }}
+          make_latest: true
+          body: |
+            رابط التحميل المباشر للتطبيق (APK):
+            https://github.com/${{ github.repository }}/releases/latest/download/Ghiyabat.apk
+
+            امسح الصورة Ghiyabat-QR.png بالكاميرا لتحميل التطبيق مباشرة.
           files: |
             out/ghiyabat-windows/*.exe
             out/ghiyabat-android/Ghiyabat.apk
+            Ghiyabat-QR.png
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
