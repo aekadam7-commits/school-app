@@ -714,6 +714,10 @@ function closeContactEl(){const e=document.getElementById('ct');if(e)e.remove()}
 function closeContact(){if(!document.getElementById('ct'))return;if(history.state&&history.state.ct)history.back();else closeContactEl()}
 window.addEventListener('popstate',closeContactEl);
 /* ---- مشاركة التطبيق: كود QR لرابط تحميل الـ APK ---- */
+/* مستودع GitHub الافتراضي: يُستبدل تلقائيًا عند البناء (tools/inject-repo.js) ويُستعمل لتوليد كود QR دائمًا دون إدخال رابط */
+const APP_REPO='aekadam7-commits/school-app';
+function apkAuto(){return APP_REPO?'https://github.com/'+APP_REPO+'/releases/latest/download/Ghiyabat.apk':''}
+function apkLink(){return (D.set&&D.set.apk)||apkAuto()}
 function apkNorm(v){v=String(v||'').trim();if(!v)return'';
  if(/^https?:\/\/\S+\.apk(\?\S*)?$/i.test(v)||/\/releases\/(latest\/)?download\//i.test(v))return v;
  var m=v.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?(?:releases\/?)?$/i)||v.match(/^([\w.-]+)\/([\w.-]+)$/);
@@ -723,15 +727,15 @@ function closeShareEl(){var e=document.getElementById('shr');if(e)e.remove()}
 function closeShare(){if(!document.getElementById('shr'))return;if(history.state&&history.state.sh)history.back();else closeShareEl()}
 window.addEventListener('popstate',closeShareEl);
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeShare()});
-function shareCopy(b){var v=(D.set&&D.set.apk)||'',ok=function(){b.textContent='تم ✓';setTimeout(function(){b.textContent='نسخ الرابط'},1200)};
+function shareCopy(b){var v=apkLink(),ok=function(){b.textContent='تم ✓';setTimeout(function(){b.textContent='نسخ الرابط'},1200)};
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(ok,function(){});
  else{var a=document.createElement('textarea');a.value=v;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}a.remove()}}
-function shareSys(){var v=(D.set&&D.set.apk)||'';try{navigator.share({title:'تسيير غيابات التلاميذ',text:'حمّل التطبيق من هذا الرابط',url:v})}catch(e){}}
-function shareSave(){var i=document.getElementById('shrIn'),n=apkNorm(i.value);
+function shareSys(){var v=apkLink();try{navigator.share({title:'تسيير غيابات التلاميذ',text:'حمّل التطبيق من هذا الرابط',url:v})}catch(e){}}
+function shareSave(){var i=document.getElementById('shrIn'),n=i.value.trim()?apkNorm(i.value):'';
  if(n===null){alert('الرابط غير صالح. اكتب مثلًا: اسم-الحساب/اسم-المستودع');return}
  D.set=D.set||{};D.set.apk=n;save();openShare(true)}
 function openShare(keep){closeShareEl();
- var link=(D.set&&D.set.apk)||'',adm=false;try{adm=isAdmin()}catch(e){}
+ var link=apkLink(),adm=false;try{adm=isAdmin()}catch(e){}
  var qr=link?QRsvg(link,260).replace('<svg ','<svg style="max-width:100%;height:auto" '):'';
  var d=document.createElement('div');d.id='shr';d.className='ctov';d.onclick=function(e){if(e.target===d)closeShare()};
  var body=link&&qr
@@ -739,7 +743,7 @@ function openShare(keep){closeShareEl();
    +'<p dir="ltr" style="word-break:break-all;font-size:12px;color:var(--muted);margin:10px 0">'+esc(link)+'</p>'
    +'<div class="r" style="justify-content:center"><button class="p" onclick="shareCopy(this)">نسخ الرابط</button>'+(navigator.share?'<button onclick="shareSys()">مشاركة</button>':'')+'</div>'
   :'<p>لم يُحدَّد رابط التحميل بعد.'+(adm?'':' اطلب من المسؤول إضافته.')+'</p>';
- var edit=adm?'<div style="margin-top:14px;text-align:right"><label>رابط التحميل (GitHub)</label><input id="shrIn" dir="ltr" style="width:100%" placeholder="اسم-الحساب/اسم-المستودع" value="'+esc(link)+'"><small style="display:block;margin:4px 0">اكتب اسم الحساب/المستودع فقط، أو الصق رابط ملف الـ APK كاملًا.</small><div class="r"><button class="p" onclick="shareSave()">حفظ</button></div></div>':'';
+ var edit=adm?'<div style="margin-top:14px;text-align:right"><label>تغيير الرابط (اختياري)</label><input id="shrIn" dir="ltr" style="width:100%" placeholder=\"'+esc(APP_REPO)+'\" value=\"'+esc((D.set&&D.set.apk)||'')+'\"small style="display:block;margin:4px 0">الكود يُولَّد تلقائيًا ولا تحتاج لإدخال شيء. اترك الخانة فارغة للرابط التلقائي.</small><div class="r"><button class="p" onclick="shareSave()">حفظ</button></div></div>':'';
  d.innerHTML='<div class="ctbox" role="dialog" aria-modal="true" aria-label="مشاركة التطبيق"><button class="ctx" onclick="closeShare()" aria-label="إغلاق">✕</button>'
   +'<div class="cthd"><div class="cthero" style="font-size:30px">📲</div><h3>مشاركة التطبيق</h3><p>امسح الكود بكاميرا الهاتف لتحميل التطبيق مباشرة</p></div>'
   +'<div style="padding:16px;text-align:center">'+body+edit+'</div></div>';
