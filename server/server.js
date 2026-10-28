@@ -230,9 +230,10 @@ function autoBackup(){
 
 setTimeout(autoBackup,5000);setInterval(autoBackup,3600*1000);
 // ===== مرحّل المسح بين الأجهزة: جهاز بكاميرا يُرسل كود التلميذ، وجهاز آخر (مستقبِل) يسجّل الدخول ويُصدر الصوت =====
-const scanQ=[];let scanSeq=0;const scanRecv=new Map();
+const scanQ=[];let scanSeq=0;const scanRecv=new Map();let camOn=false;
 app.post('/api/scan',auth,(req,res)=>{
     const b=req.body||{};
+    if(b.type==='cam'){camOn=!!b.on;if(camOn&&b.dev)scanRecv.set(String(b.dev).slice(0,40),Date.now());return res.json({ok:true,cam:camOn})}
     const type=b.type==='result'?'result':'scan';
     const ev={id:++scanSeq,type,t:Date.now(),from:String(b.from||'').slice(0,40),name:String(b.name||'').slice(0,40),to:String(b.to||'').slice(0,40)};
     if(type==='scan'){ev.code=String(b.code||'').slice(0,200);if(!ev.code)return res.status(400).json({ok:false,error:'كود فارغ'})}
@@ -247,7 +248,8 @@ app.get('/api/scan',auth,(req,res)=>{
     const since=req.query.since===undefined?null:Number(req.query.since);
     // أول طلب (بدون since) أو إعادة تشغيل السيرفر: لا نعيد أحداثًا قديمة
     const events=(since===null||since>scanSeq)?[]:scanQ.filter(e=>e.id>since&&now-e.t<60000);
-    res.json({ok:true,last:scanSeq,receivers:scanRecv.size,events})
+    if(!scanRecv.size)camOn=false; // لا كاميرا بلا مستقبِل
+    res.json({ok:true,last:scanSeq,receivers:scanRecv.size,cam:camOn,events})
 });
 
 app.get('*',(req,res)=>res.sendFile(path.join(PUBLIC_DIR,'index.html')));
