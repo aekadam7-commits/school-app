@@ -1,6 +1,5 @@
 'use strict';
 const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
-const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
@@ -54,15 +53,20 @@ async function startServer() {
   log(`Using port: ${CURRENT_PORT}`);
   const f = serverPath();
   if (!fs.existsSync(f)) throw new Error('ملف السيرفر غير موجود: ' + f);
-  serverProc = spawn(process.execPath, [f], { cwd:path.dirname(f), env:serverEnv(CURRENT_PORT), windowsHide:true, stdio:['ignore','pipe','pipe'] });
-  serverProc.stdout.on('data', d => log('SERVER ' + String(d).trim()));
-  serverProc.stderr.on('data', d => log('SERVER ERROR ' + String(d).trim()));
-  serverProc.on('error', e => { log('server spawn error: ' + e.stack); serverProc = null; });
-  serverProc.on('exit', (code, signal) => { 
-    log(`server exited code=${code} signal=${signal}`); 
-    serverProc = null; 
-    if (!quitting && win && !win.isDestroyed()) win.webContents.send('server-stopped'); 
-  });
+  // تشغيل السيرفر داخل نفس العملية (بدون child_process) لتفادي خطأ spawn على ويندوز 7
+  try {
+    const env = serverEnv(CURRENT_PORT);
+    process.env.PORT = env.PORT;
+    process.env.GHIYABAT_DATA = env.GHIYABAT_DATA;
+    process.env.GHIYABAT_PUBLIC = env.GHIYABAT_PUBLIC;
+    serverProc = { inProcess: true };
+    require(f);
+    log('SERVER started in-process on port ' + CURRENT_PORT);
+  } catch (e) {
+    serverProc = null;
+    log('server start error: ' + (e && e.stack || e));
+    throw e;
+  }
   return waitForServer();
 }
 
@@ -78,16 +82,7 @@ async function waitForServer() {
   throw new Error(`لم يستجب السيرفر على المنفذ ${CURRENT_PORT}.`);
 }
 
-function stopServer() { 
-  return new Promise(resolve => { 
-    const p = serverProc; 
-    if (!p) return resolve(); 
-    serverProc = null; 
-    const timer = setTimeout(() => { try { p.kill('SIGKILL'); } catch (_) {} resolve(); }, 2500); 
-    p.once('exit', () => { clearTimeout(timer); resolve(); }); 
-    try { p.kill(); } catch (_) { clearTimeout(timer); resolve(); } 
-  }); 
-}
+function stopServer() { serverProc = null; return Promise.resolve(); }
 
 function createWindow() {
   win = new BrowserWindow({ 
