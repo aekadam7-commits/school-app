@@ -2112,17 +2112,25 @@ function qeScanFrom(code,from){window._qeFrom=from||'';window._qeLast=null;try{q
 /* ---- مسح عبر جهاز آخر: جهاز بكاميرا يُرسل الكود، وجهاز مستقبِل يسجّل الدخول ويُصدر الصوت ---- */
 const qeDev=(()=>{let d=qeLS('qeDev');if(!d){d='d'+Math.random().toString(36).slice(2,8);qeLS('qeDev',d)}return d})();
 const qeName=()=>qeLS('qeName')||('جهاز '+qeDev.slice(-3));
-let qeSince=null,qeBusy=false,qeRecvCount=0;
-function qeNetStatus(){const e=document.getElementById('qnet');if(!e)return;const recv=qeLS('qeRecv')==='1',send=qeLS('qeSend')==='1';e.textContent=recv?'● هذا الجهاز مستقبِل — يعمل. الأجهزة المرسلة تستعمل كاميراتها.':send?(qeRecvCount>0?'● متصل: يوجد '+qeRecvCount+' جهاز مستقبِل جاهز.':'⚠ لا يوجد جهاز مستقبِل متصل حاليًا. فعّل «استقبال» على الجهاز الآخر.'):'الوضع العادي: المسح يُسجَّل في هذا الجهاز.';e.style.color=send&&!qeRecvCount?'var(--warn)':'inherit'}
+let qeSince=null,qeBusy=false,qeRecvCount=0,qeCamBusy=false,qeCamSeen=true;
+function qeNetStatus(){const e=document.getElementById('qnet');if(!e)return;const recv=qeLS('qeRecv')==='1',send=qeLS('qeSend')==='1';e.textContent=recv?(qeRecvCount&&qeCamSeen?'● كاميرا الجهاز الآخر تعمل — الأكواد تُسجَّل هنا.':'● بانتظار جهاز آخر: افتح التطبيق عليه واضغط «هذا الجهاز كاميرا لجهاز آخر».'):send?(qeRecvCount>0?'● جاهز: تفتح الكاميرا تلقائيًا عندما يطلبها الجهاز المستقبِل.':'⚠ لا يوجد جهاز مستقبِل متصل حاليًا. على الجهاز الآخر اضغط «المسح بكاميرا جهاز آخر».'):'الوضع العادي: المسح يُسجَّل في هذا الجهاز.';e.style.color=send&&!qeRecvCount?'var(--warn)':'inherit'}
 async function qeNetTick(){if(!token||qeBusy)return;const recv=qeLS('qeRecv')==='1',send=qeLS('qeSend')==='1';if(!recv&&!send)return;qeBusy=true;
  try{const r=await api('/api/scan?dev='+encodeURIComponent(qeDev)+'&role='+(recv?'recv':'send')+(qeSince!==null?'&since='+qeSince:''));const first=qeSince===null;qeSince=r.last;qeRecvCount=r.receivers||0;
+  if(send&&!recv){const v=document.getElementById('qcam'),run=!!(v&&v.srcObject);if(r.cam&&!run&&!qeCamBusy){if(!v){tab=11;R()}else{qeCamBusy=true;qeCam().finally(()=>{qeCamBusy=false})}}else if(!r.cam&&run)S.qstop=true}
   if(!first)for(const e of (r.events||[])){
    if(e.type==='scan'&&recv){const res=qeScanFrom(e.code,e.name||e.from);if(res)api('/api/scan',{method:'POST',body:JSON.stringify({type:'result',to:e.from,kind:res.kind,title:res.title,sub:res.sub})}).catch(()=>{})}
    else if(e.type==='result'&&e.to===qeDev&&send)qeShow(e.kind,e.title,e.sub)}
   qeNetStatus()}catch(e){}finally{qeBusy=false}}
 setInterval(qeNetTick,1000);
 async function qeSendCode(c){try{await api('/api/scan',{method:'POST',body:JSON.stringify({type:'scan',code:String(c).slice(0,200),from:qeDev,name:qeName()})});qeShow('warn','أُرسل الكود','بانتظار نتيجة الجهاز المستقبِل…',true)}catch(e){qeShow('bad','تعذر الإرسال',e.message)}}
-function qeSetMode(m){qeLS('qeRecv',m==='recv'?'1':'0');qeLS('qeSend',m==='send'?'1':'0');qeSince=null;if(m==='recv')qeAudio();R()}
+function qeBtns(){const e=document.getElementById('qbtns');if(!e)return;const recv=qeLS('qeRecv')==='1',send=qeLS('qeSend')==='1';
+ const st=(on,c)=>'width:100%;margin:6px 0;padding:14px;font-size:17px;font-weight:bold;border-radius:14px;border:2px solid '+c+';'+(on?'background:'+c+';color:#fff':'background:transparent;color:inherit');
+ e.innerHTML='<button style="'+st(recv,'#3498db')+'" onclick="qeToggleRecv()">📲 '+(recv?'إيقاف المسح بجهاز آخر':'المسح بكاميرا جهاز آخر')+'</button><button style="'+st(send,'#16a34a')+'" onclick="qeToggleSend()">📱 '+(send?'إيقاف: هذا الجهاز كاميرا لجهاز آخر':'هذا الجهاز كاميرا لجهاز آخر')+'</button><div id="qnet" style="margin:4px 0;font-size:13px"></div>';qeNetStatus()}
+function qeSetMode(m){qeLS('qeRecv',m==='recv'?'1':'0');qeLS('qeSend',m==='send'?'1':'0');qeSince=null;if(m==='recv')qeAudio();qeBtns()}
+function qeCamCmd(on){api('/api/scan',{method:'POST',body:JSON.stringify({type:'cam',on:!!on,dev:qeDev})}).catch(()=>{})}
+function qeToggleRecv(){if(qeLS('qeRecv')==='1'){qeSetMode('local');qeCamCmd(false)}else{qeSetMode('recv');qeCamCmd(true)}}
+function qeToggleSend(){if(qeLS('qeSend')==='1'){qeSetMode('local');S.qstop=true}else qeSetMode('send')}
+function qeCamToggle(){const v=document.getElementById('qcam');if(v&&v.srcObject)S.qstop=true;else qeCam()}
 function qeSetVol(v){qeLS('qeVol',String(v/100));qeBeep('ok')}
 function qeOnKey(ev){if(ev.key==='Enter'){const i=ev.target;qeScan(i.value);i.value=''}}
 function qeApply(){const d=qeDay();if(isHol(d))return alert('اليوم عطلة');D.qe=D.qe||{};const E=D.qe[d]||{};if(!Object.keys(E).length&&!confirm('لم يُسجَّل أي دخول اليوم؛ سيُعتبر كل التلاميذ غائبين. متابعة؟'))return;
@@ -2149,19 +2157,16 @@ function vQ(){const d=qeDay(),nq=act().filter(s=>!s.qr).length;
  $('#m').innerHTML=`<div class="card"><b>الدخول اليومي بكود QR</b> <small>— ${DAYS[dt(d).getDay()]} ${d}${isHol(d)?' (عطلة)':''}</small>
  <p><small>يمسح كل تلميذ كوده عند الدخول (بقارئ باركود أو بالكاميرا). بعد انتهاء الدخول اضغط «اعتماد الغيابات» لتسجيل غياب من لم يمسح.</small></p>
  ${nq?`<p style="color:var(--warn)">⚠ ${nq} تلميذ بدون كود QR — سجّلهم من تبويب «التسجيل السنوي».</p>`:''}
- <div class="r"><input id="qin" placeholder="امسح الكود هنا (قارئ باركود) ثم Enter" onkeydown="qeOnKey(event)" style="flex:1;direction:ltr" autocomplete="off"><button onclick="document.getElementById('qin').focus()">🎯</button><button class="p" onclick="qeCam()">📷 كاميرا</button><button onclick="S.qstop=true">إيقاف الكاميرا</button></div>
+ <div class="r"><input id="qin" placeholder="امسح الكود هنا (قارئ باركود USB) ثم Enter" onkeydown="qeOnKey(event)" style="flex:1;direction:ltr" autocomplete="off"><button class="p" title="الكاميرا" onclick="qeCamToggle()" style="padding:10px 16px">📷</button></div>
+ <div id="qbtns"></div>
  <video id="qcam" playsinline muted style="display:none;width:100%;max-width:360px;border-radius:12px;margin:8px auto"></video>
  <div id="qres" style="margin:10px 0"></div>
  <div class="r">إدخال يدوي: <input id="qm" placeholder="اسم أو رقم مدرسي" oninput="qeManual(this.value)" style="flex:1"></div><div id="qmres" class="r"></div></div>
- <div class="card"><b>الأجهزة والصوت</b>
- <div class="r"><label><input type="radio" name="qmode" ${qeLS('qeRecv')!=='1'&&qeLS('qeSend')!=='1'?'checked':''} onchange="qeSetMode('local')"> عادي (المسح يُسجَّل في هذا الجهاز)</label></div>
- <div class="r"><label><input type="radio" name="qmode" ${qeLS('qeRecv')==='1'?'checked':''} onchange="qeSetMode('recv')"> مستقبِل: يسجّل الدخول ويُصدر الصوت، ويستعمل كاميرا جهاز آخر</label></div>
- <div class="r"><label><input type="radio" name="qmode" ${qeLS('qeSend')==='1'?'checked':''} onchange="qeSetMode('send')"> مرسِل: كاميرا هذا الجهاز تُرسل الكود إلى الجهاز المستقبِل</label></div>
- <div class="r">اسم هذا الجهاز: <input value="${esc(qeName())}" onchange="qeLS('qeName',this.value.trim())" style="max-width:160px"></div>
- <div id="qnet" style="margin:6px 0"></div>
+ <div class="card"><b>الصوت</b>
  <div class="r">مستوى الصوت: <input type="range" min="10" max="100" value="${Math.round(qeVol()*100)}" onchange="qeSetVol(this.value)" style="flex:1"><button onclick="qeBeep('ok')">نجاح</button><button onclick="qeBeep('warn')">تنبيه</button><button onclick="qeBeep('bad')">خطأ</button></div>
- <small>ارفع صوت الجهاز نفسه إلى الأقصى. على الهاتف اضغط أي زر في الصفحة مرة واحدة ليسمح المتصفح بالصوت.</small></div>
- <div class="card"><div class="r">وقت التأخر بعد: <input type="time" value="${esc(D.set.qlate||'')}" onchange="D.set.qlate=this.value;save()"><small>(اتركه فارغًا لعدم تسجيل التأخر آليًا)</small></div><div class="r"><button class="p" onclick="qeApply()">اعتماد الغيابات</button><button onclick="qeUndo()">↩ إلغاء الغيابات الآلية</button><button onclick="qeExport()">تصدير Excel</button></div><div id="qstat"></div></div>`;qeRefresh();qeNetStatus();setTimeout(()=>{const i=document.getElementById('qin');if(i)i.focus()},50)}
+ <div class="r">اسم هذا الجهاز: <input value="${esc(qeName())}" onchange="qeLS('qeName',this.value.trim())" style="max-width:160px"></div>
+ <small>ارفع صوت الجهاز إلى الأقصى. على الهاتف اضغط أي زر مرة واحدة ليسمح المتصفح بالصوت.</small></div>
+ <div class="card"><div class="r">وقت التأخر بعد: <input type="time" value="${esc(D.set.qlate||'')}" onchange="D.set.qlate=this.value;save()"><small>(اتركه فارغًا لعدم تسجيل التأخر آليًا)</small></div><div class="r"><button class="p" onclick="qeApply()">اعتماد الغيابات</button><button onclick="qeUndo()">↩ إلغاء الغيابات الآلية</button><button onclick="qeExport()">تصدير Excel</button></div><div id="qstat"></div></div>`;qeRefresh();qeBtns();setTimeout(()=>{const i=document.getElementById('qin');if(i)i.focus()},50)}
 
 </script>
 <script>
