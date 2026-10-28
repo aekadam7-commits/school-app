@@ -2085,8 +2085,20 @@ function rgSelAll(v){rgVis().forEach(e=>S.rsel[e.id]=v);document.querySelectorAl
 /* ===================== الدخول اليومي بـ QR (إضافة مستقلة) ===================== */
 const qeDay=()=>iso(new Date());
 function qeTime(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')}
-function qeBeep(ok){try{const A=window.AudioContext||window.webkitAudioContext,a=new A(),o=a.createOscillator(),g=a.createGain();o.frequency.value=ok?880:220;g.gain.value=.15;o.connect(g);g.connect(a.destination);o.start();setTimeout(()=>{o.stop();a.close()},ok?120:350)}catch(e){}try{navigator.vibrate&&navigator.vibrate(ok?60:[80,60,80])}catch(e){}}
-function qeShow(kind,title,sub){const el=document.getElementById('qres');if(!el)return;const col=kind=='ok'?'var(--ok)':kind=='warn'?'var(--warn)':'var(--red)';el.innerHTML=`<div style="border:2px solid ${col};border-radius:12px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:bold;color:${col}">${esc(title)}</div><div>${esc(sub||'')}</div></div>`;qeBeep(kind!='bad')}
+let QAC=null;
+function qeAudio(){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;if(!QAC||QAC.state==='closed')QAC=new A();if(QAC.state==='suspended')QAC.resume();return QAC}catch(e){return null}}
+['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,()=>{qeAudio()},{passive:true}));
+const qeLS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}return null};
+const qeVol=()=>{const v=parseFloat(qeLS('qeVol'));return isNaN(v)?1:Math.min(1,Math.max(0,v))};
+/* صوت قوي: موجة مربّعة بأعلى سعة + ضاغط ديناميكي، ونغمة مختلفة لكل حالة */
+function qeBeep(kind){if(kind===true)kind='ok';if(kind===false)kind='bad';const a=qeAudio();
+ if(a){try{const vol=Math.max(.001,qeVol()),comp=a.createDynamicsCompressor();comp.threshold.value=-30;comp.knee.value=10;comp.ratio.value=14;comp.connect(a.destination);
+  const pat=kind==='ok'?[[1568,0,.16],[2093,.19,.26]]:kind==='warn'?[[988,0,.2],[988,.26,.2],[988,.52,.2]]:[[196,0,.3],[147,.34,.3],[196,.68,.5]];
+  pat.forEach(function(p){const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+.02+p[1],d=p[2];o.type=kind==='bad'?'sawtooth':'square';o.frequency.value=p[0];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.setValueAtTime(vol,t+d-.03);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(comp);o.start(t);o.stop(t+d+.03)})}catch(e){}}
+ try{navigator.vibrate&&navigator.vibrate(kind==='ok'?80:[100,60,100,60,100])}catch(e){}}
+function qeShow(kind,title,sub,quiet){window._qeLast={kind:kind,title:title,sub:sub};const full=(sub||'')+(window._qeFrom?' — عبر '+window._qeFrom:'');const el=document.getElementById('qres');const col=kind=='ok'?'var(--ok)':kind=='warn'?'var(--warn)':'var(--red)';
+ if(el)el.innerHTML=`<div style="border:3px solid ${col};border-radius:12px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:bold;color:${col}">${esc(title)}</div><div>${esc(full)}</div></div>`;else{try{toast(title+' — '+full,kind=='bad')}catch(e){}}
+ if(!quiet)qeBeep(kind)}
 function qeScan(raw,manualId){const d=qeDay();let s;if(manualId)s=D.st.find(x=>x.id==manualId&&!x.x);else{const code=String(raw||'').trim();if(!code)return;s=D.st.find(x=>x.qr&&x.qr==code)}
  if(!s){qeShow('bad','كود غير معروف',String(raw||'').slice(0,40));return}
  if(s.x){qeShow('bad',s.n,'تلميذ غير متمدرس ('+s.x+')');return}
@@ -2096,6 +2108,22 @@ function qeScan(raw,manualId){const d=qeDay();let s;if(manualId)s=D.st.find(x=>x
  if(lim&&t>lim&&heldForStudent(s.c,s.grp,d).length){D.lt[d]=D.lt[d]||{};D.lt[d][s.id]=1;late=true}
  if(D.qa&&D.qa[d]&&D.qa[d].includes(s.id)){D.qa[d]=D.qa[d].filter(x=>x!=s.id);if(D.ab[d])delete D.ab[d][s.id]}
  save();qeShow(late?'warn':'ok',s.n,(late?'⚠ متأخر — ':'✔ ')+s.c+(s.grp?' / '+s.grp:'')+' — '+t);qeRefresh()}
+function qeScanFrom(code,from){window._qeFrom=from||'';window._qeLast=null;try{qeScan(code)}finally{window._qeFrom=''}return window._qeLast}
+/* ---- مسح عبر جهاز آخر: جهاز بكاميرا يُرسل الكود، وجهاز مستقبِل يسجّل الدخول ويُصدر الصوت ---- */
+const qeDev=(()=>{let d=qeLS('qeDev');if(!d){d='d'+Math.random().toString(36).slice(2,8);qeLS('qeDev',d)}return d})();
+const qeName=()=>qeLS('qeName')||('جهاز '+qeDev.slice(-3));
+let qeSince=null,qeBusy=false,qeRecvCount=0;
+function qeNetStatus(){const e=document.getElementById('qnet');if(!e)return;const recv=qeLS('qeRecv')==='1',send=qeLS('qeSend')==='1';e.textContent=recv?'● هذا الجهاز مستقبِل — يعمل. الأجهزة المرسلة تستعمل كاميراتها.':send?(qeRecvCount>0?'● متصل: يوجد '+qeRecvCount+' جهاز مستقبِل جاهز.':'⚠ لا يوجد جهاز مستقبِل متصل حاليًا. فعّل «استقبال» على الجهاز الآخر.'):'الوضع العادي: المسح يُسجَّل في هذا الجهاز.';e.style.color=send&&!qeRecvCount?'var(--warn)':'inherit'}
+async function qeNetTick(){if(!token||qeBusy)return;const recv=qeLS('qeRecv')==='1',send=qeLS('qeSend')==='1';if(!recv&&!send)return;qeBusy=true;
+ try{const r=await api('/api/scan?dev='+encodeURIComponent(qeDev)+'&role='+(recv?'recv':'send')+(qeSince!==null?'&since='+qeSince:''));const first=qeSince===null;qeSince=r.last;qeRecvCount=r.receivers||0;
+  if(!first)for(const e of (r.events||[])){
+   if(e.type==='scan'&&recv){const res=qeScanFrom(e.code,e.name||e.from);if(res)api('/api/scan',{method:'POST',body:JSON.stringify({type:'result',to:e.from,kind:res.kind,title:res.title,sub:res.sub})}).catch(()=>{})}
+   else if(e.type==='result'&&e.to===qeDev&&send)qeShow(e.kind,e.title,e.sub)}
+  qeNetStatus()}catch(e){}finally{qeBusy=false}}
+setInterval(qeNetTick,1000);
+async function qeSendCode(c){try{await api('/api/scan',{method:'POST',body:JSON.stringify({type:'scan',code:String(c).slice(0,200),from:qeDev,name:qeName()})});qeShow('warn','أُرسل الكود','بانتظار نتيجة الجهاز المستقبِل…',true)}catch(e){qeShow('bad','تعذر الإرسال',e.message)}}
+function qeSetMode(m){qeLS('qeRecv',m==='recv'?'1':'0');qeLS('qeSend',m==='send'?'1':'0');qeSince=null;if(m==='recv')qeAudio();R()}
+function qeSetVol(v){qeLS('qeVol',String(v/100));qeBeep('ok')}
 function qeOnKey(ev){if(ev.key==='Enter'){const i=ev.target;qeScan(i.value);i.value=''}}
 function qeApply(){const d=qeDay();if(isHol(d))return alert('اليوم عطلة');D.qe=D.qe||{};const E=D.qe[d]||{};if(!Object.keys(E).length&&!confirm('لم يُسجَّل أي دخول اليوم؛ سيُعتبر كل التلاميذ غائبين. متابعة؟'))return;
  const cand=act().filter(s=>!E[s.id]&&!((D.ab[d]||{})[s.id])&&heldForStudent(s.c,s.grp,d).length);
@@ -2109,9 +2137,14 @@ function qeRefresh(){const d=qeDay(),E=(D.qe&&D.qe[d])||{},A=act();const el=docu
  const last=Object.entries(E).sort((a,b)=>b[1].localeCompare(a[1])).slice(0,8).map(([id,t])=>{const s=D.st.find(x=>x.id==id);return s?`<tr><td>${t}</td><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.c)}</td></tr>`:''}).join('');
  el.innerHTML=`<div class="r"><b>حضر ${Object.keys(E).filter(id=>A.some(s=>s.id==id)).length} من ${A.length}</b></div><div class="t"><table><tr><th>القسم</th><th>المجموع</th><th>حاضر</th><th>لم يمسح</th><th>متأخر</th></tr>${rows}</table></div><h4>آخر الدخول</h4><div class="t"><table><tr><th>الوقت</th><th>التلميذ</th><th>القسم</th></tr>${last||'<tr><td colspan="3">—</td></tr>'}</table></div>`}
 function qeExport(){const d=qeDay(),E=(D.qe&&D.qe[d])||{};exportSheets('دخول_'+d,[{n:'الدخول',rows:[['التلميذ','القسم','الفوج','وقت الدخول','متأخر'],...act().map(s=>[s.n,s.c,s.grp||'',E[s.id]||'لم يمسح',E[s.id]&&isLate(d,s.id)?'نعم':''])]}])}
-async function qeCam(){if(!('BarcodeDetector' in window))return alert('الكاميرا لا تدعم قراءة QR في هذا الجهاز/المتصفح. استعمل قارئ باركود (USB/بلوتوث) في خانة المسح، أو الإدخال اليدوي.');
- try{const det=new BarcodeDetector({formats:['qr_code']}),v=document.getElementById('qcam');const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});v.srcObject=st;await v.play();v.style.display='block';let last='',lt=0;
-  const tick=async()=>{if(!document.getElementById('qcam')){st.getTracks().forEach(t=>t.stop());return}if(S.qstop){S.qstop=false;st.getTracks().forEach(t=>t.stop());v.style.display='none';return}try{const r=await det.detect(v);if(r.length){const c=r[0].rawValue,n=Date.now();if(c!=last||n-lt>3000){last=c;lt=n;qeScan(c)}}}catch(e){}setTimeout(tick,250)};tick()}catch(e){alert('تعذر تشغيل الكاميرا: '+e.message)}}
+function loadJsQR(){return window.jsQR?Promise.resolve():new Promise((ok,no)=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';x.onload=ok;x.onerror=()=>no(new Error('تعذر تحميل مكتبة قراءة QR (تحتاج الإنترنت مرة واحدة). استعمل قارئ باركود أو الإدخال اليدوي.'));document.head.appendChild(x)})}
+async function qeCam(){if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return alert('الكاميرا غير متاحة هنا. إذا فتحت التطبيق في المتصفح عبر عنوان الشبكة (http://192.168...) فالمتصفح يمنع الكاميرا في الاتصال غير الآمن. شغّل الكاميرا من تطبيق الأندرويد/سطح المكتب، أو فعّل خيار «Insecure origins treated as secure» في متصفح الهاتف (انظر الشرح).');
+ let det=null;if('BarcodeDetector' in window){try{det=new BarcodeDetector({formats:['qr_code']})}catch(e){det=null}}
+ if(!det){try{await loadJsQR()}catch(e){return alert(e.message)}}
+ try{const v=document.getElementById('qcam');if(v.srcObject)return;const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});v.srcObject=st;await v.play();v.style.display='block';let last='',lt=0;const cv=document.createElement('canvas'),cx=cv.getContext('2d');
+  const read=async()=>{if(det){const r=await det.detect(v);return r.length?r[0].rawValue:''}const w=v.videoWidth,h=v.videoHeight;if(!w)return'';const sc=Math.min(1,640/w);cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);cx.drawImage(v,0,0,cv.width,cv.height);const im=cx.getImageData(0,0,cv.width,cv.height);const q=window.jsQR(im.data,im.width,im.height);return q?q.data:''};
+  const stop=()=>{st.getTracks().forEach(t=>t.stop());v.srcObject=null;v.style.display='none'};
+  const tick=async()=>{if(!document.getElementById('qcam')){stop();return}if(S.qstop){S.qstop=false;stop();return}try{const c=await read();if(c){const n=Date.now();if(c!=last||n-lt>3000){last=c;lt=n;qeLS('qeSend')==='1'?qeSendCode(c):qeScan(c)}}}catch(e){if(det){det=null;loadJsQR().catch(()=>{})}}setTimeout(tick,250)};tick()}catch(e){alert('تعذر تشغيل الكاميرا: '+e.message)}}
 function vQ(){const d=qeDay(),nq=act().filter(s=>!s.qr).length;
  $('#m').innerHTML=`<div class="card"><b>الدخول اليومي بكود QR</b> <small>— ${DAYS[dt(d).getDay()]} ${d}${isHol(d)?' (عطلة)':''}</small>
  <p><small>يمسح كل تلميذ كوده عند الدخول (بقارئ باركود أو بالكاميرا). بعد انتهاء الدخول اضغط «اعتماد الغيابات» لتسجيل غياب من لم يمسح.</small></p>
@@ -2120,7 +2153,15 @@ function vQ(){const d=qeDay(),nq=act().filter(s=>!s.qr).length;
  <video id="qcam" playsinline muted style="display:none;width:100%;max-width:360px;border-radius:12px;margin:8px auto"></video>
  <div id="qres" style="margin:10px 0"></div>
  <div class="r">إدخال يدوي: <input id="qm" placeholder="اسم أو رقم مدرسي" oninput="qeManual(this.value)" style="flex:1"></div><div id="qmres" class="r"></div></div>
- <div class="card"><div class="r">وقت التأخر بعد: <input type="time" value="${esc(D.set.qlate||'')}" onchange="D.set.qlate=this.value;save()"><small>(اتركه فارغًا لعدم تسجيل التأخر آليًا)</small></div><div class="r"><button class="p" onclick="qeApply()">اعتماد الغيابات</button><button onclick="qeUndo()">↩ إلغاء الغيابات الآلية</button><button onclick="qeExport()">تصدير Excel</button></div><div id="qstat"></div></div>`;qeRefresh();setTimeout(()=>{const i=document.getElementById('qin');if(i)i.focus()},50)}
+ <div class="card"><b>الأجهزة والصوت</b>
+ <div class="r"><label><input type="radio" name="qmode" ${qeLS('qeRecv')!=='1'&&qeLS('qeSend')!=='1'?'checked':''} onchange="qeSetMode('local')"> عادي (المسح يُسجَّل في هذا الجهاز)</label></div>
+ <div class="r"><label><input type="radio" name="qmode" ${qeLS('qeRecv')==='1'?'checked':''} onchange="qeSetMode('recv')"> مستقبِل: يسجّل الدخول ويُصدر الصوت، ويستعمل كاميرا جهاز آخر</label></div>
+ <div class="r"><label><input type="radio" name="qmode" ${qeLS('qeSend')==='1'?'checked':''} onchange="qeSetMode('send')"> مرسِل: كاميرا هذا الجهاز تُرسل الكود إلى الجهاز المستقبِل</label></div>
+ <div class="r">اسم هذا الجهاز: <input value="${esc(qeName())}" onchange="qeLS('qeName',this.value.trim())" style="max-width:160px"></div>
+ <div id="qnet" style="margin:6px 0"></div>
+ <div class="r">مستوى الصوت: <input type="range" min="10" max="100" value="${Math.round(qeVol()*100)}" onchange="qeSetVol(this.value)" style="flex:1"><button onclick="qeBeep('ok')">نجاح</button><button onclick="qeBeep('warn')">تنبيه</button><button onclick="qeBeep('bad')">خطأ</button></div>
+ <small>ارفع صوت الجهاز نفسه إلى الأقصى. على الهاتف اضغط أي زر في الصفحة مرة واحدة ليسمح المتصفح بالصوت.</small></div>
+ <div class="card"><div class="r">وقت التأخر بعد: <input type="time" value="${esc(D.set.qlate||'')}" onchange="D.set.qlate=this.value;save()"><small>(اتركه فارغًا لعدم تسجيل التأخر آليًا)</small></div><div class="r"><button class="p" onclick="qeApply()">اعتماد الغيابات</button><button onclick="qeUndo()">↩ إلغاء الغيابات الآلية</button><button onclick="qeExport()">تصدير Excel</button></div><div id="qstat"></div></div>`;qeRefresh();qeNetStatus();setTimeout(()=>{const i=document.getElementById('qin');if(i)i.focus()},50)}
 
 </script>
 <script>
@@ -2239,6 +2280,48 @@ document.addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
 new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
 scan();
+})();
+</script>
+<script>
+/* أيقونات SVG بديلة: على أجهزة بلا خط إيموجي (ويندوز 7 وبعض نسخ 32 بت) تظهر الأيقونات مربعات فارغة، فتُستبدل بأيقونات مرسومة */
+(function(){
+function noEmoji(){try{if(/Windows NT [56]\./.test(navigator.userAgent))return true;if(localStorage.getItem('svgIcons')==='1')return true;var c=document.createElement('canvas');c.width=c.height=40;var x=c.getContext('2d');x.textBaseline='top';x.font='28px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';x.fillText('\uD83D\uDE00',2,2);var d=x.getImageData(0,0,40,40).data;for(var i=0;i<d.length;i+=4)if(d[i+3]>40&&(Math.abs(d[i]-d[i+1])>25||Math.abs(d[i+1]-d[i+2])>25))return false;return true}catch(e){return false}}
+if(!noEmoji())return;
+function S(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>'}
+var M={
+'\uD83C\uDFE0':S('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>'),
+'\u2699':S('<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'),
+'\uD83D\uDC65':S('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+'\uD83D\uDDD3':S('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
+'\u2705':S('<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
+'\uD83D\uDCCA':S('<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>'),
+'\uD83D\uDCC5':S('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'),
+'\uD83D\uDD14':S('<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'),
+'\uD83D\uDCDD':S('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
+'\uD83D\uDEE1':S('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+'\uD83C\uDF93':S('<path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>'),
+'\uD83D\uDCF1':S('<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
+'\uD83C\uDFEB':S('<path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/>'),
+'\uD83D\uDD0D':S('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
+'\uD83D\uDCF2':S('<rect x="5" y="2" width="14" height="20" rx="2"/><polyline points="9 11 12 14 15 11"/><line x1="12" y1="7" x2="12" y2="14"/>'),
+'\uD83D\uDCDE':S('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>'),
+'\u2600':S('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>'),
+'\uD83C\uDF19':S('<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>'),
+'\uD83D\uDEAA':S('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
+'\uD83D\uDDA8':S('<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>'),
+'\uD83D\uDCC4':S('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'),
+'\uD83D\uDDD1':S('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>'),
+'\uD83C\uDFAF':S('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
+'\uD83D\uDCF7':S('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>'),
+'\u2716':S('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>')
+};
+var st=document.createElement('style');st.textContent='.eic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;line-height:1}.eic svg{width:100%;height:100%;display:block}';document.head.appendChild(st);
+var KEYS=Object.keys(M).map(function(k){return k.replace(/[\u2600-\u27BF]/g,function(c){return c})}).join('|');
+var RX=new RegExp('('+KEYS+')\\uFE0F?','g'),QUICK=/[\u2600-\u27BF\uD83C-\uD83E]/,busy=false;
+function fixText(n){var s=n.nodeValue;if(!QUICK.test(s))return;RX.lastIndex=0;if(!RX.test(s))return;RX.lastIndex=0;var frag=document.createDocumentFragment(),last=0,m;while((m=RX.exec(s))){if(m.index>last)frag.appendChild(document.createTextNode(s.slice(last,m.index)));var sp=document.createElement('span');sp.className='eic';sp.innerHTML=M[m[1]];frag.appendChild(sp);last=m.index+m[0].length}if(last<s.length)frag.appendChild(document.createTextNode(s.slice(last)));n.parentNode.replaceChild(frag,n)}
+function fixTree(root){if(busy||!root)return;busy=true;try{if(root.nodeType===3){if(root.parentNode&&!/^(SCRIPT|STYLE|TEXTAREA)$/.test(root.parentNode.nodeName))fixText(root)}else if(root.nodeType===1){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null,false),a=[],n;while((n=w.nextNode())){if(!/^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(n.parentNode.nodeName))a.push(n)}a.forEach(fixText);var ph=root.querySelectorAll?root.querySelectorAll('[placeholder]'):[];for(var i=0;i<ph.length;i++){var v=ph[i].getAttribute('placeholder');if(QUICK.test(v))ph[i].setAttribute('placeholder',v.replace(RX,'').trim())}}}catch(e){}busy=false}
+function start(){fixTree(document.body);new MutationObserver(function(ms){if(busy)return;ms.forEach(function(m){if(m.type==='characterData')fixTree(m.target);else for(var i=0;i<m.addedNodes.length;i++)fixTree(m.addedNodes[i])})}).observe(document.body,{childList:true,subtree:true,characterData:true})}
+if(document.body)start();else document.addEventListener('DOMContentLoaded',start)
 })();
 </script>
 </body>
