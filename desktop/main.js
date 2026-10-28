@@ -4,6 +4,24 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
+const http = require('http');
+
+// Electron 22 (Windows 7) ships Node 16 without global fetch
+function httpJson(url) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(url, { timeout: 2000 }, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) return reject(new Error('HTTP ' + res.statusCode));
+        try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+  });
+}
 
 app.disableHardwareAcceleration();
 let win = null, serverProc = null, quitting = false;
@@ -53,8 +71,7 @@ async function waitForServer() {
   while (Date.now() < until) {
     if (!serverProc) throw new Error('توقف السيرفر أثناء التشغيل.');
     try { 
-      const r = await fetch(`http://127.0.0.1:${CURRENT_PORT}/api/ping`); 
-      if (r.ok) return await r.json(); 
+      return await httpJson(`http://127.0.0.1:${CURRENT_PORT}/api/ping`);
     } catch (_) {}
     await new Promise(r => setTimeout(r, 300));
   }
