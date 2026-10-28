@@ -229,6 +229,27 @@ function autoBackup(){
 }
 
 setTimeout(autoBackup,5000);setInterval(autoBackup,3600*1000);
+// ===== مرحّل المسح بين الأجهزة: جهاز بكاميرا يُرسل كود التلميذ، وجهاز آخر (مستقبِل) يسجّل الدخول ويُصدر الصوت =====
+const scanQ=[];let scanSeq=0;const scanRecv=new Map();
+app.post('/api/scan',auth,(req,res)=>{
+    const b=req.body||{};
+    const type=b.type==='result'?'result':'scan';
+    const ev={id:++scanSeq,type,t:Date.now(),from:String(b.from||'').slice(0,40),name:String(b.name||'').slice(0,40),to:String(b.to||'').slice(0,40)};
+    if(type==='scan'){ev.code=String(b.code||'').slice(0,200);if(!ev.code)return res.status(400).json({ok:false,error:'كود فارغ'})}
+    else{ev.kind=['ok','warn','bad'].includes(b.kind)?b.kind:'warn';ev.title=String(b.title||'').slice(0,120);ev.sub=String(b.sub||'').slice(0,200)}
+    scanQ.push(ev);while(scanQ.length>200)scanQ.shift();
+    res.json({ok:true,id:ev.id})
+});
+app.get('/api/scan',auth,(req,res)=>{
+    const now=Date.now(),dev=String(req.query.dev||'').slice(0,40);
+    if(req.query.role==='recv'&&dev)scanRecv.set(dev,now);
+    for(const [k,v] of scanRecv)if(now-v>5000)scanRecv.delete(k);
+    const since=req.query.since===undefined?null:Number(req.query.since);
+    // أول طلب (بدون since) أو إعادة تشغيل السيرفر: لا نعيد أحداثًا قديمة
+    const events=(since===null||since>scanSeq)?[]:scanQ.filter(e=>e.id>since&&now-e.t<60000);
+    res.json({ok:true,last:scanSeq,receivers:scanRecv.size,events})
+});
+
 app.get('*',(req,res)=>res.sendFile(path.join(PUBLIC_DIR,'index.html')));
 
 app.listen(PORT,'0.0.0.0',()=>{
