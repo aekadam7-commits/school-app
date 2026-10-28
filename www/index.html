@@ -619,8 +619,10 @@ function noteTitle(k){return k=='فصل'?'إشعار بالفصل بسبب ال�
 function sendNote(id,ch){
  const s=D.st.find(x=>x.id==id);if(!s)return;const st=stN(s);if(!st.lv)return;
  const a=st.start,b=asOfDate(),k=LV[st.lv],t=D.set;
+ if(ch=='mail'&&!confirm('تسجيل هذا الإشعار كـ «مُرسَل» (بالبريد أو بوسيلة أخرى) للتلميذ '+s.n+'؟'))return;
  let num='';if(ch=='wa'||ch=='sms'){num=waNum(s.ph);if(num.length<9){alert('رقم هاتف الولي غير صالح أو غير مسجل');return}}
  D.nl.push({id:'n'+Date.now(),sid:id,date:today,lv:st.lv,ch,h:st.u,sk:st.streak,a,b,reply:''});save();
+ if(ch=='mail'){R();return}
  if(num){const txt=noteText(s,st,a,b);
   openExt(ch=='wa'?'https://wa.me/'+num+'?text='+encodeURIComponent(txt):'sms:+'+num+'?body='+encodeURIComponent(txt));R();return}
  printDoc(noteTitle(k),`<div style="font-family:Tahoma;padding:20px;line-height:2;color:#000">${offHead()}<h2 style="text-align:center"><u>${noteTitle(k)}</u></h2><p>إلى السيد(ة) ولي أمر التلميذ(ة): <b>${esc(s.n)}</b><br>المولود(ة) في: ${esc(s.bd)} بـ ${esc(s.bp)} — الرقم المدرسي: ${esc(s.sn)}<br>القسم: ${esc(s.c)} ${s.grp?'— الفوج: '+esc(s.grp):''} — العنوان: ${esc(s.ad)} — الهاتف: ${esc(s.ph)}</p><p>نعلمكم أنه خلال الفترة من ${a} إلى ${b} ${esc(noteBody(k,st))}. ${noteAction(k)}</p><p>تحريرا في: ${today}</p>${sigP()}<p>توقيع الولي (استلام): ...................</p></div>`,false)}
@@ -650,7 +652,7 @@ function printPage(){const m=document.getElementById('m').cloneNode(true);
  printDoc(TABS[tab],m.innerHTML+(m.querySelector('.sig')?'':sigHtml()),tab==6||tab==3)}
 function nlSet(id,v){const n=D.nl.find(x=>x.id==id);if(n){n.reply=v;save()}}
 function nlDel(id){if(confirm('حذف هذا السجل؟')){D.nl=D.nl.filter(x=>x.id!=id);save();R()}}
-const CHN={print:'طباعة',wa:'واتساب',sms:'SMS'},REPL=['','لم يرد','حضر الولي','اتصل الولي','قدّم تبريرًا'];
+const CHN={print:'طباعة',wa:'واتساب',sms:'SMS',mail:'بريد / يدوي'},REPL=['','لم يرد','حضر الولي','اتصل الولي','قدّم تبريرًا'];
 function v6(){
  const cl=S.cls?[S.cls]:D.cls,asOf=asOfDate();
  const L=act().filter(s=>cl.includes(s.c)).map(s=>[s,stN(s)]).filter(x=>x[1].lv).map(([s,x])=>{const pv=D.nl.filter(n=>n.sid==s.id&&n.date>=x.start),mx=Math.max(0,...pv.map(n=>n.lv));return[s,x,pv,mx>=x.lv]}).filter(r=>!(S.hs&&r[3])).sort((x,y)=>y[1].lv-x[1].lv||y[1].streak-x[1].streak);
@@ -658,7 +660,7 @@ function v6(){
  const log=D.nl.filter(n=>sm[n.sid]&&cl.includes(sm[n.sid].c)).slice().reverse();
  $('#m').innerHTML=`<div class="card"><div class="r">القسم: ${clsSel(true)} محسوب حتى تاريخ: <input type="date" value="${asOf}" onchange="S.asof=this.value;R()"><button onclick="S.asof='';R()">آخر يوم مسجَّل</button><label style="margin:0"><input type="checkbox" ${S.hs?'checked':''} onchange="S.hs=this.checked;R()"> إخفاء من أُرسل له المستوى الحالي</label></div>
  <small>عتبات الأيام المتتالية غير المبررة: إشعار أول ${D.cdTh[0]} — ثاني ${D.cdTh[1]} — مضمون ${D.cdTh[2]} — فصل ${D.cdTh[3]}. التلميذ المبرَّر بشهادة طبية سارية لا يظهر هنا؛ وحضور الولي يصفّر العدّاد.</small>
- <div class="t"><table style="min-width:980px"><tr><th>التلميذ</th><th>القسم/الفوج</th><th>أيام متتالية</th><th>منذ</th><th>ساعات غير مبررة</th><th>المستوى</th><th>الإشعارات</th><th>إجراءات</th></tr>${L.map(([s,x,pv,sent])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.grp?s.grp+' - '+s.c:s.c)}</td><td><b>${x.streak}</b></td><td>${x.start}</td><td>${x.u}</td><td><b>${LV[x.lv]}</b></td><td>${sent?'✔ أُرسل ('+pv.length+')':pv.length?pv.length+' (أدنى من المستوى)':'—'}</td><td style="white-space:nowrap"><button onclick="sendNote('${s.id}','print')">طباعة</button> <button onclick="sendNote('${s.id}','wa')" ${s.ph?'':'disabled'}>واتساب</button> <button onclick="sendNote('${s.id}','sms')" ${s.ph?'':'disabled'}>SMS</button> <button onclick="parentCame('${s.id}')">حضر الولي</button> <button onclick="goEx('${s.id}')">تبرير</button>${x.lv>=4?` <button class="p" onclick="dismissSt('${s.id}','غياب ${D.cdTh[3]} يومًا متتالية')">تنفيذ الفصل</button>`:''}</td></tr>`).join('')||'<tr><td colspan=8>لا توجد حالات</td></tr>'}</table></div></div>
+ <div class="t"><table style="min-width:980px"><tr><th>التلميذ</th><th>القسم/الفوج</th><th>أيام متتالية</th><th>منذ</th><th>ساعات غير مبررة</th><th>المستوى</th><th>الإشعارات</th><th>إجراءات</th></tr>${L.map(([s,x,pv,sent])=>`<tr><td style="text-align:right">${esc(s.n)}</td><td>${esc(s.grp?s.grp+' - '+s.c:s.c)}</td><td><b>${x.streak}</b></td><td>${x.start}</td><td>${x.u}</td><td><b>${LV[x.lv]}</b></td><td>${sent?'✔ أُرسل ('+pv.length+')':pv.length?pv.length+' (أدنى من المستوى)':'—'}</td><td style="white-space:nowrap"><button onclick="sendNote('${s.id}','print')">طباعة</button> <button onclick="sendNote('${s.id}','wa')" ${s.ph?'':'disabled'}>واتساب</button> <button onclick="sendNote('${s.id}','sms')" ${s.ph?'':'disabled'}>SMS</button> <button onclick="sendNote('${s.id}','mail')">مُرسَل (بريد)</button> <button onclick="parentCame('${s.id}')">حضر الولي</button> <button onclick="goEx('${s.id}')">تبرير</button>${x.lv>=4?` <button class="p" onclick="dismissSt('${s.id}','غياب ${D.cdTh[3]} يومًا متتالية')">تنفيذ الفصل</button>`:''}</td></tr>`).join('')||'<tr><td colspan=8>لا توجد حالات</td></tr>'}</table></div></div>
  <div class="card"><b>سجل الإشعارات المرسلة</b><div class="t"><table style="min-width:760px"><tr><th>التاريخ</th><th>التلميذ</th><th>القسم</th><th>المستوى</th><th>الوسيلة</th><th>الفترة</th><th>رد الولي</th><th></th></tr>${log.map(n=>`<tr><td>${n.date}</td><td style="text-align:right">${esc(sm[n.sid].n)}</td><td>${esc(sm[n.sid].c)}</td><td>${LV[n.lv]||''}</td><td>${CHN[n.ch]||''}</td><td><small>${n.a} → ${n.b}</small></td><td><select onchange="nlSet('${n.id}',this.value)">${REPL.map(r=>`<option value="${r}" ${r==n.reply?'selected':''}>${r||'— بدون رد —'}</option>`).join('')}</select></td><td><button onclick="nlDel('${n.id}')">✕</button></td></tr>`).join('')||'<tr><td colspan=8>لا توجد إشعارات مسجلة</td></tr>'}</table></div></div>`}
 
 // ---- التبريرات
@@ -1965,6 +1967,16 @@ function stFile(id,y){
  const ex=D.ex.filter(e=>e.sid==id&&e.a<=b&&(e.b||e.a)>=a).sort((p,q)=>p.a<q.a?-1:1);
  const nl=D.nl.filter(n=>n.sid==id&&n.date>=a&&n.date<=b).sort((p,q)=>p.date<q.date?-1:1);
  const hi=s.hist||[];
+ const al=(()=>{try{if(!act().some(z=>z.id==id))return'';const x=stN(s);if(!x||!x.lv||x.start<a||x.start>b)return'';const pv=D.nl.filter(n=>n.sid==id&&n.date>=x.start),mx=Math.max(0,...pv.map(n=>n.lv));if(mx>=x.lv)return'';return`<p style="margin:6px 0;padding:6px 8px;border:1px solid #c0392b;border-radius:6px"><b>⚠ ${LV[x.lv]} مستحق (لم يُرسل بعد)</b> — ${x.streak} أيام متتالية غير مبررة منذ ${x.start} — ${x.u} ساعة غير مبررة</p>`}catch(e){return''}})();
+ const dow=d=>{try{return DAYS[dt(d).getDay()]||''}catch(e){return''}};
+ const evs=[];
+ days.forEach(d=>{const h=[...D.ab[d][id]].sort((p,q)=>p-q),j=jus(d,id),e=exOf(d,id),r=((D.ju[d]||{})[id]||{}).r||'';evs.push([d,1,'غياب','الساعات: '+h.join('، ')+' ('+h.length+') — '+(j?'مبرر':'غير مبرر')+(e?' — '+(EXL[e.t]||''):'')+(r?' — '+r:'')])});
+ lt.forEach(d=>{const t=((D.qe||{})[d]||{})[id];evs.push([d,2,'تأخر',t?'وقت الدخول: '+t:''])});
+ ex.forEach(e=>evs.push([e.a,3,e.t=='parent'?'حضور الولي':'تبرير — '+(EXL[e.t]||''),e.t=='parent'?(e.n||''):'من '+e.a+' إلى '+(e.b||e.a)+(e.n?' — '+e.n:'')]));
+ nl.forEach(n=>evs.push([n.date,4,'إشعار — '+(LV[n.lv]||''),'الوسيلة: '+(CHN[n.ch]||n.ch||'')+' — الفترة: '+n.a+' ← '+n.b+(n.sk?' — '+n.sk+' أيام متتالية':'')+' — '+n.h+' ساعة غير مبررة'+(n.reply?' — رد الولي: '+n.reply:'')]));
+ hi.filter(h=>h.d&&h.d>=a&&h.d<=b).forEach(h=>evs.push([h.d,5,h.t||'',[h.r,h.c?'القسم: '+h.c:''].filter(Boolean).join(' — ')]));
+ evs.sort((p,q)=>p[0]<q[0]?-1:p[0]>q[0]?1:p[1]-q[1]);
+ const evRows=evs.map(x=>`<tr><td>${esc(x[0])}</td><td>${dow(x[0])}</td><td>${esc(x[2])}</td><td>${esc(x[3])}</td></tr>`).join('');
  const tbl=(t,h,rows,empty)=>`<h4 style="margin:14px 0 4px">${t}</h4>`+(rows?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse" border="1"><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows}</table></div>`:`<p style="margin:2px 0"><small>${empty}</small></p>`);
  const html=`<div class="np r" style="margin-bottom:8px">السنة الدراسية: <select onchange="stFile('${id}',this.value)">${yearList().map(v=>`<option ${v==y?'selected':''}>${v}</option>`).join('')}</select></div>
  <h2 style="text-align:center"><u>ملف التلميذ</u></h2>${s.qr&&typeof QRsvg=='function'?`<div style="float:left">${QRsvg(s.qr,80)}</div>`:''}
@@ -1973,8 +1985,9 @@ function stFile(id,y){
  ${tbl('الغيابات',['التاريخ','اليوم','الساعات','العدد','الحالة'],ar,'لا غيابات مسجلة')}
  ${tbl('التأخرات',['التاريخ','اليوم'],lt.map(d=>`<tr><td>${d}</td><td>${DAYS[dt(d).getDay()]}</td></tr>`).join(''),'لا تأخرات مسجلة')}
  ${tbl('التبريرات',['النوع','من','إلى','ملاحظة'],ex.map(e=>`<tr><td>${EXL[e.t]||''}</td><td>${esc(e.a)}</td><td>${e.t=='parent'?'—':esc(e.b)}</td><td>${esc(e.n)}</td></tr>`).join(''),'لا تبريرات')}
- ${tbl('الإشعارات',['التاريخ','المستوى','الوسيلة','الفترة','ساعات غير مبررة','رد الولي'],nl.map(n=>`<tr><td>${esc(n.date)}</td><td>${esc(LV[n.lv]||'')}</td><td>${esc(CHN[n.ch]||n.ch)}</td><td>${esc(n.a)} ← ${esc(n.b)}</td><td>${esc(n.h)}</td><td>${esc(n.reply)}</td></tr>`).join(''),'لا إشعارات')}
+ ${tbl('الإشعارات',['التاريخ','المستوى','الوسيلة','الفترة','ساعات غير مبررة','رد الولي'],nl.map(n=>`<tr><td>${esc(n.date)}</td><td>${esc(LV[n.lv]||'')}</td><td>${esc(CHN[n.ch]||n.ch)}</td><td>${esc(n.a)} ← ${esc(n.b)}</td><td>${esc(n.h)}</td><td>${esc(n.reply)}</td></tr>`).join(''),al?'لم يُرسل أي إشعار بعد':'لا إشعارات')}${al}
  ${tbl('سجل الحالة (فصل، تخلٍّ، إعادة إدماج…)',['التاريخ','الإجراء','السبب','القسم'],hi.map(h=>`<tr><td>${esc(h.d)}</td><td>${esc(h.t)}</td><td>${esc(h.r)}</td><td>${esc(h.c)}</td></tr>`).join(''),'لا سجل')}
+ ${tbl('السجل الزمني الكامل لعمليات التلميذ',['التاريخ','اليوم','العملية','التفاصيل'],evRows,'لا عمليات مسجلة')}
  <p>تحريرا في: ${today}</p>${sigP()}`;
  printDoc('ملف التلميذ — '+s.n,html,false)}
 function qsOpen(){closeMdl();const m=document.createElement('div');m.className='mdl';m.id='mdl';m.onclick=e=>{if(e.target===m)m.remove()};
