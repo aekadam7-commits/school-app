@@ -26,10 +26,29 @@ public class GhiyabatService extends Service {
  public IBinder onBind(Intent i){return null;}
 }`);
   write(path.join(pkgDir,'GhiyabatPlugin.java'),`package ${appId};
-import android.content.*; import android.os.Build; import com.getcapacitor.*; import com.getcapacitor.annotation.*;
+import android.content.*; import android.os.Build; import com.getcapacitor.*; import com.getcapacitor.annotation.*; import android.print.PrintAttributes; import android.print.PrintDocumentAdapter; import android.print.PrintManager; import android.webkit.WebView; import android.webkit.WebViewClient;
 @CapacitorPlugin(name="GhiyabatService") public class GhiyabatPlugin extends Plugin {
  @PluginMethod public void start(PluginCall call){Intent i=new Intent(getContext(),GhiyabatService.class);if(Build.VERSION.SDK_INT>=26)getContext().startForegroundService(i);else getContext().startService(i);call.resolve();}
  @PluginMethod public void stop(PluginCall call){getContext().stopService(new Intent(getContext(),GhiyabatService.class));call.resolve();}
+ private WebView printWv;
+ @PluginMethod public void printHtml(final PluginCall call){
+  final String html=call.getString("html",""); final String name=call.getString("name","document"); final boolean land=Boolean.TRUE.equals(call.getBoolean("landscape",false));
+  getActivity().runOnUiThread(new Runnable(){ public void run(){
+   try{
+    printWv=new WebView(getActivity());
+    printWv.setWebViewClient(new WebViewClient(){ public void onPageFinished(WebView v,String u){
+     try{
+      PrintManager pm=(PrintManager)getActivity().getSystemService(Context.PRINT_SERVICE);
+      PrintDocumentAdapter ad=v.createPrintDocumentAdapter(name);
+      PrintAttributes.MediaSize ms=land?PrintAttributes.MediaSize.ISO_A4.asLandscape():PrintAttributes.MediaSize.ISO_A4;
+      pm.print(name,ad,new PrintAttributes.Builder().setMediaSize(ms).setMinMargins(new PrintAttributes.Margins(400,400,400,400)).build());
+      call.resolve();
+     }catch(Exception e){call.reject(String.valueOf(e.getMessage()));}
+    }});
+    printWv.loadDataWithBaseURL(null,html,"text/html","UTF-8",null);
+   }catch(Exception e){call.reject(String.valueOf(e.getMessage()));}
+  }});
+ }
 }`);
   const res=J('android','app','src','main','res'), src=J('tools','android-icons');
   if(fs.existsSync(src)){
