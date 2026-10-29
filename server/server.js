@@ -55,7 +55,8 @@ function auth(req,res,next){
     req.user=u;next()
 }
 
-app.get('/api/ping',(req,res)=>res.json({ok:true,app:'تسيير غيابات التلاميذ',port:PORT,setupRequired:users.length===0,serverTime:new Date().toISOString()}));
+const lanIps=()=>{const o=[];try{const n=os.networkInterfaces();for(const k in n)for(const a of n[k]||[])if(a.family==='IPv4'&&!a.internal)o.push(a.address)}catch(e){}return o};
+app.get('/api/ping',(req,res)=>res.json({ok:true,app:'تسيير غيابات التلاميذ',port:PORT,setupRequired:users.length===0,serverTime:new Date().toISOString(),ips:lanIps()}));
 app.get('/api/auth/status',(req,res)=>res.json({ok:true,setupRequired:users.length===0}));
 
 app.post('/api/auth/setup',(req,res)=>{
