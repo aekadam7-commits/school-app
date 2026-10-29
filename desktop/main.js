@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
@@ -31,6 +31,21 @@ function log(s) { try { fs.mkdirSync(path.dirname(logFile()), {recursive:true});
 
 process.on('uncaughtException', e => log('uncaughtException: ' + (e && e.stack || e)));
 process.on('unhandledRejection', e => log('unhandledRejection: ' + String(e)));
+
+// حفظ المعاينة الحالية كملف PDF (نص عربي متجهي حقيقي، بدون إنترنت)
+ipcMain.handle('ghiyabat:pdf', async (e, o) => {
+  try {
+    o = o || {};
+    const wc = e.sender, owner = BrowserWindow.fromWebContents(wc);
+    const data = await wc.printToPDF({ pageSize: 'A4', landscape: !!o.landscape, printBackground: true, preferCSSPageSize: true });
+    const safe = String(o.name || 'document').replace(/[\\\/:*?"<>|]+/g, ' ').trim().slice(0, 120) || 'document';
+    const r = await dialog.showSaveDialog(owner, { title: 'حفظ PDF', defaultPath: path.join(app.getPath('documents'), safe + '.pdf'), filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+    if (r.canceled || !r.filePath) return { canceled: true };
+    fs.writeFileSync(r.filePath, data);
+    try { shell.showItemInFolder(r.filePath); } catch (_) {}
+    return { path: r.filePath };
+  } catch (err) { log('pdf error: ' + (err && err.stack || err)); return { error: String(err && err.message || err) }; }
+});
 
 function serverPath() { return path.join(app.getAppPath(), 'server', 'server.js'); }
 function serverEnv(port) { return { ...process.env, ELECTRON_RUN_AS_NODE:'1', PORT:String(port), GHIYABAT_DATA:path.join(app.getPath('userData'),'data'), GHIYABAT_PUBLIC:path.join(app.getAppPath(),'server','public') }; }
