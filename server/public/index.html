@@ -177,7 +177,13 @@ function norm(){D.grp=D.grp||{};D.th=D.th||[6,12,18];if(!D.v2){D.cdTh=[3,7,15,30
 let D;try{D=Object.assign(mk(),JSON.parse(localStorage.getItem('abs3'))||{})}catch(e){D=mk()}
 norm();
 let token=localStorage.getItem('gh_token')||'', user=null, tmr=null, pollTimer=null, syncing=false, msg='غير متصل بالسيرفر';
-const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const base=native?'http://127.0.0.1:8787':'';const r=await fetch(base+url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
+/* ---- دور الجهاز: سيرفر (يحمل البيانات) أو فرعي (يتصل بسيرفر آخر) — يُسأل عنه في التطبيق (أندرويد/ويندوز) عند أول فتح ---- */
+const ghIsApp=()=>!!(window.GhiyabatDesktop||(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()));
+const ghRole=()=>{try{return localStorage.getItem('gh_role')||''}catch(e){return''}};
+const ghRemote=()=>{try{return localStorage.getItem('gh_remote')||''}catch(e){return''}};
+function ghBase(native){if(ghIsApp()&&ghRole()==='client'&&ghRemote())return ghRemote();return native?'http://127.0.0.1:8787':''}
+function ghNormUrl(v){v=String(v||'').trim().replace(/\/+$/,'');if(!v)return'';if(!/^https?:\/\//i.test(v))v='http://'+v;if(!/^https?:\/\/[^\/:]+:\d+/i.test(v))v=v.replace(/^(https?:\/\/[^\/:]+)/i,'$1:8787');return v}
+const api=async(url,opts={})=>{const headers={'Content-Type':'application/json',...(opts.headers||{})};if(token)headers.Authorization='Bearer '+token;const native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const base=ghBase(native);const r=await fetch(base+url,{...opts,headers});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j};
 function toast(m,bad){if(!window._tOK)return;let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e)}e.textContent=m;e.style.background=bad?'#dc2626':'#16a34a';e.classList.add('on');clearTimeout(window._tt);window._tt=setTimeout(()=>e.classList.remove('on'),2200)}
 setTimeout(()=>{window._tOK=true},4000);
 const save=()=>{EXC=null;DV++;localStorage.setItem('abs3',JSON.stringify(D));push();toast('✓ تم حفظ التعديل')};
@@ -214,8 +220,11 @@ function renderGate(setup,error=''){
   +'<div class="gt-app">تسيير غيابات التلاميذ</div>'
   +'<div class="gt-c"><div class="gt-in">'+form+'<div class="gt-l"><a onclick="openContact()">اتصل بنا</a></div></div></div>'
   +(error?'<div class="gt-err">'+esc(error)+'</div>':'')
-  +'<p class="gt-n">تأكد أن نافذة السيرفر مفتوحة على الجهاز الرئيسي.</p>'
+  +'<p class="gt-n">'+(ghIsApp()&&ghRole()==='client'?'متصل بالسيرفر: '+esc(ghRemote()):'تأكد أن نافذة السيرفر مفتوحة على الجهاز الرئيسي.')+'</p>'
+  +'<p id="gtAddr" class="gt-n"></p>'
+  +(ghIsApp()?'<p class="gt-n"><a onclick="ghChangeRole()" style="cursor:pointer;text-decoration:underline">تغيير دور الجهاز ('+(ghRole()==='client'?'فرعي':'سيرفر')+')</a></p>':'')
   +'</div>';
+ ghShowAddr();
 }
 function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!token||syncing||dirty||isSyncing)return;try{syncing=true;const r=await api('/api/state');if(r.state&&r.state.data&&r.updatedAt&&r.updatedAt!==window._lastServerUpdate){const local=JSON.parse(localStorage.getItem('abs3')||'{}');if(JSON.stringify(local)!==JSON.stringify(r.state.data)){D=Object.assign(mk(),r.state.data);norm();localStorage.setItem('abs3',JSON.stringify(D));msg='تم تحديث البيانات من السيرفر';R()}window._lastServerUpdate=r.updatedAt;setStatus()}}catch(e){msg='انقطع الاتصال بالسيرفر';setStatus()}finally{syncing=false}},3000)}
 const DAYS=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],HR=[1,2,3,4,5,6,7,8];
@@ -713,7 +722,30 @@ async function startEmbeddedAndroidServer(){
   while(Date.now()<end){ if(await ping()) return; await wait(500) }
   throw new Error('لم يبدأ السيرفر المدمج على الهاتف. أغلق التطبيق تمامًا ثم افتحه مجددًا.');
 }
+function renderRole(err){document.body.classList.remove('side');document.querySelector('#nav').innerHTML='';const cur=ghRole();
+ document.querySelector('#m').innerHTML='<div class="gt'+(isDark()?' gd':'')+'"><div class="gt-app">تسيير غيابات التلاميذ</div><div class="gt-c"><div class="gt-in"><h1>اختر دور هذا الجهاز</h1><p class="gt-s">يمكنك تغييره لاحقًا من شاشة الدخول</p>'
+ +'<button type="button" class="gt-b" onclick="pickRole(\'server\')">🏫 سيرفر — الجهاز الرئيسي'+(cur==='server'?' ✓':'')+'</button><p class="gt-s" style="margin:4px 0 14px">يحمل البيانات ويشغّل السيرفر. يكون واحدًا فقط في المؤسسة.</p>'
+ +'<button type="button" class="gt-b" style="background:#16a34a" onclick="pickRole(\'client\')">📱 فرعي — يتصل بسيرفر آخر'+(cur==='client'?' ✓':'')+'</button><p class="gt-s" style="margin:4px 0">يستعمل بيانات السيرفر عبر الشبكة نفسها (واي فاي واحد).</p>'
+ +'</div></div>'+(err?'<div class="gt-err">'+esc(err)+'</div>':'')+'</div>'}
+function pickRole(r){if(r==='server'){try{localStorage.setItem('gh_role','server');localStorage.removeItem('gh_token')}catch(e){}token='';boot();return}renderClientSetup()}
+function renderClientSetup(err){document.body.classList.remove('side');document.querySelector('#nav').innerHTML='';
+ document.querySelector('#m').innerHTML='<div class="gt'+(isDark()?' gd':'')+'"><div class="gt-app">تسيير غيابات التلاميذ</div><div class="gt-c"><div class="gt-in"><h1>الاتصال بالسيرفر</h1><p class="gt-s">اكتب عنوان السيرفر كما يظهر في شاشة الدخول على الجهاز الرئيسي</p>'
+ +'<div class="gt-f"><input id="rcUrl" dir="ltr" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="192.168.1.5:8787" value="'+esc(ghRemote())+'" onkeydown="if(event.key===\'Enter\')connectClient()"></div>'
+ +'<button type="button" class="gt-b" onclick="connectClient()">اتصال</button><button type="button" class="gt-b" style="background:transparent;color:inherit;border:1px solid #888;margin-top:8px" onclick="renderRole()">رجوع</button>'
+ +'<p id="rcSt" class="gt-s" style="margin-top:10px">'+(err?esc(err):'')+'</p></div></div></div>'}
+async function connectClient(){const u=ghNormUrl(document.getElementById('rcUrl').value),st=document.getElementById('rcSt');if(!u){st.textContent='اكتب عنوان السيرفر.';return}st.textContent='جارٍ الاتصال بـ '+u+' ...';
+ try{const r=await withTimeout(fetch(u+'/api/ping',{cache:'no-store'}),5000);const j=await r.json();if(!r.ok||!j.ok)throw new Error('رد غير صالح');
+  try{localStorage.setItem('gh_role','client');localStorage.setItem('gh_remote',u);localStorage.removeItem('gh_token')}catch(e){}token='';boot()}
+ catch(e){st.textContent='تعذر الاتصال بالسيرفر ('+u+'). تأكد أن الجهازين على نفس الواي فاي وأن السيرفر مفتوح على الجهاز الرئيسي.'}}
+function ghChangeRole(){try{localStorage.removeItem('gh_token')}catch(e){}token='';renderRole()}
+async function ghShowAddr(){if(ghRole()!=='server'||!ghIsApp())return;const el=document.getElementById('gtAddr');if(!el)return;try{const nat=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());const r=await fetch((nat?'http://127.0.0.1:8787':'')+'/api/ping',{cache:'no-store'});const j=await r.json();const ips=(j.ips||[]);el.innerHTML=ips.length?'عنوان هذا السيرفر للأجهزة الفرعية:<br><b dir="ltr" style="user-select:all">'+ips.map(ip=>'http://'+ip+':'+j.port).join('<br>')+'</b>':''}catch(e){}}
 async function boot(){
+  if(ghIsApp()&&!ghRole()){renderRole();return}
+  if(ghIsApp()&&ghRole()==='client'){
+    if(!ghRemote()){renderClientSetup();return}
+    renderLoading('جارٍ الاتصال بالسيرفر...');
+    try{await withTimeout(fetch(ghRemote()+'/api/ping',{cache:'no-store'}),6000)}catch(e){renderClientSetup('تعذر الاتصال بالسيرفر '+ghRemote()+'. تأكد من الواي فاي وأن السيرفر مفتوح، أو عدّل العنوان.');return}
+    initServer();return}
   renderLoading('جارٍ تشغيل السيرفر المحلي...');
   try{await startEmbeddedAndroidServer()}catch(e){renderFatal(e.message||String(e));return}
   initServer();
